@@ -29,9 +29,10 @@ fn append_runtime_log(path: &Path, message: &str) {
     }
 }
 
-/// Probe an HTTP response, not just an open TCP port. A listening port alone
-/// does not mean Next.js has finished starting or can render the application.
-fn probe_http(port: u16) -> Result<Option<u16>, String> {
+/// Probe the application's health endpoint, not just an open port. A different
+/// local service can occupy port 3000 and return HTTP 200; require the explicit
+/// Auto Torque response marker before allowing the window to navigate.
+fn probe_http(port: u16) -> Result<Option<(u16, bool)>, String> {
     let address = SocketAddr::from(([127, 0, 0, 1], port));
     let mut stream = match TcpStream::connect_timeout(&address, Duration::from_millis(300)) {
         Ok(stream) => stream,
@@ -47,7 +48,9 @@ fn probe_http(port: u16) -> Result<Option<u16>, String> {
         .map_err(|error| format!("set HTTP probe write timeout: {error}"))?;
 
     if stream
-        .write_all(b"GET / HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n")
+        .write_all(
+            b"GET /api/v1/health HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n",
+        )
         .is_err()
     {
         return Ok(None);
@@ -64,29 +67,58 @@ fn probe_http(port: u16) -> Result<Option<u16>, String> {
         .nth(1)
         .and_then(|value| value.parse::<u16>().ok());
 
-    Ok(status)
+    let Some(status) = status else {
+        return Ok(None);
+    };
+
+    let mut is_auto_torque = false;
+    loop {
+        let mut header_line = String::new();
+        match reader.read_line(&mut header_line) {
+            Ok(0) | Err(_) => return Ok(None),
+            Ok(_) if header_line == "\r\n" || header_line == "\n" => break,
+            Ok(_) => {
+                if let Some((name, value)) = header_line.split_once(':') {
+                    if name.eq_ignore_ascii_case("x-auto-torque-service")
+                        && value.trim().eq_ignore_ascii_case("auto-torque")
+                    {
+                        is_auto_torque = true;
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(Some((status, is_auto_torque)))
 }
 
-/// Wait up to ~45 s for the bundled Next.js server. Require a successful or
-/// redirect HTTP response before allowing the desktop window to navigate.
+/// Wait up to ~45 s for the bundled Next.js server. Require the expected app
+/// identity and a successful or redirect HTTP response before opening the UI.
 fn wait_for_server(port: u16, log_path: &Path) -> Result<(), String> {
     const MAX_ATTEMPTS: u32 = 450; // 450 * 100 ms = 45 s
     let mut last_status = None;
 
     for attempt in 0..MAX_ATTEMPTS {
         match probe_http(port) {
-            Ok(Some(status @ 200..=399)) => {
+            Ok(Some((status, true)) @ _) if (200..=399).contains(&status) => {
                 append_runtime_log(
                     log_path,
                     &format!("HTTP readiness check succeeded: status={status}, port={port}"),
                 );
                 return Ok(());
             }
-            Ok(Some(status)) => {
+            Ok(Some((status, false))) => {
+                let message = format!(
+                    "Port {port} returned HTTP {status}, but did not identify itself as Auto Torque; refusing to open a blank or unrelated window"
+                );
+                append_runtime_log(log_path, &message);
+                return Err(message);
+            }
+            Ok(Some((status, true))) => {
                 last_status = Some(status);
                 if status >= 500 {
                     let message = format!(
-                        "Next.js returned HTTP {status} on 127.0.0.1:{port}; refusing to open a blank window"
+                        "Auto Torque health endpoint returned HTTP {status} on 127.0.0.1:{port}; refusing to open a blank window"
                     );
                     append_runtime_log(log_path, &message);
                     return Err(message);
@@ -100,7 +132,7 @@ fn wait_for_server(port: u16, log_path: &Path) -> Result<(), String> {
             append_runtime_log(
                 log_path,
                 &format!(
-                    "Still waiting for Next.js on port {port} (attempt {attempt}/{}; last HTTP status: {last_status:?})",
+                    "Still waiting for Auto Torque on port {port} (attempt {attempt}/{}; last HTTP status: {last_status:?})",
                     MAX_ATTEMPTS
                 ),
             );
@@ -109,7 +141,7 @@ fn wait_for_server(port: u16, log_path: &Path) -> Result<(), String> {
     }
 
     let message = format!(
-        "Auto Torque server did not return a successful HTTP response on 127.0.0.1:{port} within 45 s (last status: {last_status:?})"
+        "Auto Torque server did not return a successful, identified HTTP response on 127.0.0.1:{port} within 45 s (last status: {last_status:?})"
     );
     append_runtime_log(log_path, &message);
     Err(message)
