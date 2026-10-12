@@ -168,7 +168,31 @@ A web user account and a technician/mobile identity may be related but are not n
 4. Sign in with your normal Auto Torque account on the host. The QR code is only a connection address; it is not a password or a login token.
 5. Create a clearly named test customer on one device, then find it on the other. Edit the test record from the secondary device and confirm the change is visible on the main device before entering production data.
 
-Use a browser on the secondary device for this shared-host workflow. A separate packaged desktop instance starts its own local runtime/database by default and is not yet a native remote-only client mode. Do not use that second local instance if the requirement is that no independent SQLite database be created on the secondary device.
+### Native desktop app: remote-only secondary mode (Windows)
+
+A packaged desktop build can now start as a remote-only client. In this mode it checks `AUTO_TORQUE_REMOTE_URL` **before** creating the application-data directory, copying a SQLite seed, or launching the local Next.js server. It navigates the native window to the main device's server. If the variable is present but invalid, startup fails closed rather than silently creating a local database.
+
+1. First configure and start the main device using the host steps above. Use the saved QR code to read the exact host address, such as `http://192.168.1.20:3000`.
+2. On the secondary Windows computer, open PowerShell. If you have a project checkout, you can use the helper script:
+   
+   ```powershell
+   .\scripts\start-remote-secondary.ps1 -AppPath "C:\Path\To\Auto Torque.exe" -HostUrl "http://192.168.1.20:3000"
+   ```
+
+   Or launch the packaged executable directly:
+   
+   ```powershell
+   $env:AUTO_TORQUE_REMOTE_URL = "http://192.168.1.20:3000"
+   $env:AUTO_TORQUE_LAN_HOST = "false"
+   $env:AUTO_TORQUE_LAN_ORIGINS = ""
+   Start-Process "C:\Path\To\Auto Torque.exe"
+   ```
+
+   Replace the sample URL and executable path. The URL must be a private LAN IP address or a `.local` hostname, with no path, query, fragment, or credentials.
+3. Sign in normally in the native window. All application reads and writes go to the main device's server/database. The secondary app does not start its own Next server or initialize/copy its SQLite database in remote-only mode.
+4. To return to standalone local mode, close the app and launch it without `AUTO_TORQUE_REMOTE_URL`. Only do this if you actually want an independent local installation; it will initialize/use a local database.
+
+**Existing local data is not automatically deleted.** If this device was previously run in local mode, its old database file may still be present but is not opened by remote-only startup. Back it up first; remove it manually only if you are certain it contains no data you need. This pass provides address-based native remote mode; direct QR-image import into the native startup path and one-time host-approved pairing/revocation remain future work.
 
 ### What is shared, and what is not
 
