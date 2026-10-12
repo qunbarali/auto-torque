@@ -100,7 +100,7 @@ fn wait_for_server(port: u16, log_path: &Path) -> Result<(), String> {
 
     for attempt in 0..MAX_ATTEMPTS {
         match probe_http(port) {
-            Ok(Some((status, true)) @ _) if (200..=399).contains(&status) => {
+            Ok(Some((status, true))) if (200..=399).contains(&status) => {
                 append_runtime_log(
                     log_path,
                     &format!("HTTP readiness check succeeded: status={status}, port={port}"),
