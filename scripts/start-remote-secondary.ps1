@@ -22,7 +22,7 @@ if ($uri.Scheme -notin @("http", "https") -or $uri.UserInfo -or $uri.AbsolutePat
   throw "Use an HTTP(S) origin only, without credentials, path, query, or fragment."
 }
 
-$hostName = $uri.DnsSafeHost -replace '^\[|\]
+$hostName = $uri.DnsSafeHost.TrimStart([char[]]@('[')).TrimEnd([char[]]@(']'))
 $isLocalName = $hostName.EndsWith(".local", [System.StringComparison]::OrdinalIgnoreCase)
 $ip = $null
 $isPrivateIp = $false
