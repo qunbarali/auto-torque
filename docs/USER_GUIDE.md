@@ -138,7 +138,48 @@ If your deployment uses the technician mobile app/API:
 
 A web user account and a technician/mobile identity may be related but are not necessarily interchangeable. Follow the setup flow supplied by your administrator.
 
-## 12. Reports, dashboard, and reminders
+## 13. Two devices on the same Wi-Fi (shared local data)
+
+**Important:** Auto Torque's packaged desktop app normally keeps its SQLite database on that computer and listens only on loopback. Two separate installations do not automatically synchronize their databases just because they use the same username and password.
+
+To use the same live customer, vehicle, job, invoice, and inventory records from two devices, configure one device as the LAN host and use the other device's browser as a client. Both devices then connect to one server and one database. This is shared access, not peer-to-peer database replication.
+
+### Set up the host (Windows packaged desktop)
+
+1. Connect the host and client to the same trusted private Wi-Fi network.
+2. On the host, open Command Prompt or PowerShell and run `ipconfig`. Find the active Wi-Fi adapter's IPv4 address, for example `192.168.1.20`. Prefer a DHCP reservation in your router so the address stays stable.
+3. In Windows Defender Firewall, allow inbound TCP port 3000 for the **Private** network profile only. Do not allow it on Public networks and do not forward the port from the router to the internet.
+4. Close Auto Torque if it is already running. Open PowerShell and launch the packaged application with LAN mode enabled. Replace the example path and IP address with your actual values:
+
+   ```powershell
+   $env:AUTO_TORQUE_LAN_HOST = "true"
+   $env:AUTO_TORQUE_LAN_ORIGINS = "http://192.168.1.20:3000"
+   Start-Process "C:\Path\To\Auto Torque.exe"
+   ```
+
+   Keep the PowerShell window open if you are launching the app from it. The environment variables must be inherited by the desktop executable; putting them only in `.env` does not configure the Rust desktop host. LAN mode is disabled by default. If the origin list is empty, the app refuses to start the LAN server.
+
+5. If Windows asks about network access, allow it only on the Private network. Do not disable the firewall entirely.
+
+### Connect the second device
+
+1. Open a browser on the second device while it is on the same Wi-Fi.
+2. Enter the host address, for example `http://192.168.1.20:3000`.
+3. Sign in with the existing Auto Torque credentials. Since both devices reach the same host database, do not create a separate account just to make data appear.
+4. Create a clearly named test customer on one device, then refresh and search for it on the other. Verify an edit as well before entering production records.
+5. Use the host machine's app for host-side maintenance and backups. Keep it awake and Auto Torque running while the second device needs access.
+
+### Security, availability, and troubleshooting
+
+- Use this only on a trusted private network. LAN mode makes the server reachable from the network; HTTP does not encrypt passwords or customer data in transit. Use HTTPS for untrusted networks or sensitive production deployments.
+- The explicit origin list must match the address and port clients actually use, e.g. `http://192.168.1.20:3000`. If the host IP changes, update the origin setting and restart the app.
+- If the client cannot connect, check that both devices are on the same Wi-Fi (not an isolated guest network), the host address is correct, Auto Torque is running, and the Private-profile firewall rule permits TCP 3000.
+- If the page loads but sign-in is rejected, check `AUTO_TORQUE_LAN_ORIGINS` for the exact origin, including the port.
+- If the host shuts down, other devices cannot access the application. Back up the host database and uploaded files regularly.
+- Do not copy a live SQLite file back and forth or run two separate app databases expecting them to merge. There is no automatic merge/replication engine; separate databases can diverge.
+- To return to local-only mode, close the app and launch it without `AUTO_TORQUE_LAN_HOST=true`. The packaged app then binds to `127.0.0.1` again.
+
+## 13. Reports, dashboard, and reminders
 
 - Use dashboard widgets to monitor the operational information your role can access.
 - Use reports for a defined period and check filters before interpreting totals.
@@ -148,7 +189,7 @@ A web user account and a technician/mobile identity may be related but are not n
 
 If a chart or report appears empty, check date range, organization, filters, permissions, and whether records exist for that period before assuming data was lost.
 
-## 13. Organization settings, roles, and licensing
+## 14. Organization settings, roles, and licensing
 
 The application supports organizations, memberships, roles/permissions, invitations, settings, audit logs, and plan-dependent features in applicable deployments.
 
@@ -160,7 +201,7 @@ The application supports organizations, memberships, roles/permissions, invitati
 
 Do not edit database rows directly to bypass a permission or licensing error. Resolve the role, configuration, or subscription problem through the supported administration workflow.
 
-## 14. Search, save, delete, and button troubleshooting
+## 15. Search, save, delete, and button troubleshooting
 
 For any form or action:
 
@@ -182,7 +223,7 @@ If a button appears to do nothing:
 
 Buttons that create, update, delete, export, share, or send data should be verified against the saved backend state and error path. Do not treat visual feedback alone as proof that a backend operation succeeded.
 
-## 15. Backup, restore, and upgrades
+## 16. Backup, restore, and upgrades
 
 Before upgrading:
 
@@ -195,7 +236,7 @@ Before upgrading:
 
 For the desktop version, application data is stored in the operating system's app-data directory, not in the read-only application bundle. Reinstalling/upgrading the app should not be treated as a backup strategy.
 
-## 16. Administrator quick checklist
+## 17. Administrator quick checklist
 
 - [ ] Strong, private authentication secret configured.
 - [ ] First administrator account secured and registration policy reviewed.
@@ -207,7 +248,7 @@ For the desktop version, application data is stored in the operating system's ap
 - [ ] Desktop package tested on a clean target machine.
 - [ ] Critical create/update/delete/share flows tested using non-production records.
 
-## 17. Support information to collect
+## 18. Support information to collect
 
 When reporting a defect, include:
 
