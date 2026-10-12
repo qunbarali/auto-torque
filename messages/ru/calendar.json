@@ -1,0 +1,82 @@
+{
+  "weekdays": {
+    "mon": "Пн",
+    "tue": "Вт",
+    "wed": "Ср",
+    "thu": "Чт",
+    "fri": "Пт",
+    "sat": "Сб",
+    "sun": "Вс"
+  },
+  "months": {
+    "january": "Январь",
+    "february": "Февраль",
+    "march": "Март",
+    "april": "Апрель",
+    "may": "Май",
+    "june": "Июнь",
+    "july": "Июль",
+    "august": "Август",
+    "september": "Сентябрь",
+    "october": "Октябрь",
+    "november": "Ноябрь",
+    "december": "Декабрь"
+  },
+  "stats": {
+    "services": "Обслуживания",
+    "overdue": "Просрочено",
+    "pendingQuotes": "Ожидающие предложения",
+    "revenue": "Доход"
+  },
+  "today": "Сегодня",
+  "workOrder": "Заказ-наряд",
+  "filters": {
+    "services": "Обслуживания",
+    "reminders": "Напоминания",
+    "quotes": "Предложения",
+    "messages": "Сообщения"
+  },
+  "selectVehicle": "Выберите транспортное средство для заказ-наряда",
+  "dateChoice": {
+    "title": "Дата заказ-наряда",
+    "description": "Вы выбрали {selectedDate}. На какую дату следует перенести этот заказ-наряд?",
+    "useSelected": "Выбрать {date}",
+    "useToday": "Сегодня"
+  },
+  "more": "+ ещё {count}",
+  "monthTotal": "{count} событий в этом месяце",
+  "contextMenu": {
+    "newWorkOrder": "Новый заказ-наряд",
+    "newReminder": "Новое напоминание",
+    "newQuote": "Новое предложение",
+    "openEvent": "Открыть ({count})",
+    "hint": "Совет: щёлкните по дню правой кнопкой мыши, чтобы увидеть действия",
+    "scheduleMessage": "Запланировать сообщение"
+  },
+  "events": {
+    "status": {
+      "completed": "Завершено",
+      "inProgress": "В работе",
+      "waitingParts": "Ожидание запчастей",
+      "pending": "Ожидает",
+      "sent": "Отправлено",
+      "approved": "Одобрено",
+      "draft": "Черновик",
+      "done": "Готово",
+      "overdue": "Просрочено",
+      "upcoming": "Предстоящее",
+      "failed": "Ошибка",
+      "queued": "В очереди"
+    },
+    "type": {
+      "service": "Обслуживание",
+      "reminder": "Напоминание",
+      "quote": "Предложение",
+      "message": "Сообщение"
+    },
+    "noEvents": "Нет событий",
+    "selectDay": "Выберите день с событиями или создайте новый заказ-наряд."
+  },
+  "previousMonth": "Previous month",
+  "nextMonth": "Next month"
+}

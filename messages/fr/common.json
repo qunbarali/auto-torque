@@ -1,0 +1,99 @@
+{
+  "brandName": "Auto Torque",
+  "buttons": {
+    "signIn": "Se connecter",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "submit": "Soumettre",
+    "back": "Retour",
+    "confirm": "Confirmer",
+    "saveChanges": "Enregistrer les modifications",
+    "edit": "Modifier",
+    "add": "Ajouter",
+    "gotIt": "J’ai compris"
+  },
+  "contextMenu": {
+    "hint": "Astuce : clic droit sur une ligne pour les actions",
+    "open": "Ouvrir",
+    "openVehicle": "Ouvrir le véhicule",
+    "openCustomer": "Ouvrir le client",
+    "edit": "Modifier",
+    "delete": "Supprimer"
+  },
+  "form": {
+    "email": "Adresse e-mail",
+    "password": "Mot de passe",
+    "emailPlaceholder": "you@example.com",
+    "name": "Nom",
+    "phone": "Téléphone",
+    "company": "Entreprise",
+    "address": "Adresse",
+    "notes": "Notes"
+  },
+  "errors": {
+    "unexpected": "Une erreur inattendue s'est produite. Veuillez réessayer.",
+    "error": "Erreur"
+  },
+  "terms": {
+    "termsOfService": "Conditions d'utilisation"
+  },
+  "errorPage": {
+    "title": "Quelque chose s'est mal passé",
+    "description": "Le moteur a calé de manière inattendue. Nos mécaniciens ont été prévenus et travaillent dessus.",
+    "tryAgain": "Réessayer",
+    "backToDashboard": "Retour au tableau de bord"
+  },
+  "notFoundPage": {
+    "title": "Page introuvable",
+    "description": "On dirait que cette pièce est encore à l'atelier. La page que vous recherchez n'existe pas ou a été déplacée.",
+    "backToDashboard": "Retour au tableau de bord"
+  },
+  "updateBanner": {
+    "updated": "Auto Torque a été mis à jour vers {version}",
+    "whatsNew": "Voir les nouveautés",
+    "dismiss": "Fermer"
+  },
+  "pagination": {
+    "showing": "{start}–{end} sur {total}",
+    "perPage": "par page",
+    "pageOf": "Page {page} sur {pages}",
+    "first": "Première page",
+    "previous": "Page précédente",
+    "next": "Page suivante",
+    "last": "Dernière page"
+  },
+  "shared": {
+    "close": "Fermer",
+    "viewPlans": "Voir les formules",
+    "manageLicense": "Gérer la licence",
+    "installOwn": "Installer la vôtre",
+    "install": "Installer",
+    "installApp": "Installer l'application",
+    "installTorqvoice": "Installer Auto Torque",
+    "dismiss": "Fermer",
+    "useCamera": "Utiliser la caméra",
+    "enterManually": "Saisir manuellement",
+    "enterBarcode": "Saisir un code-barres…",
+    "scanHint": "Pointez la caméra vers un code-barres ou saisissez-le manuellement",
+    "iosInstallHint": "Touchez Partager > Sur l'écran d'accueil",
+    "installDescription": "Ajoutez-la à votre écran d'accueil pour un accès rapide",
+    "enterFullscreen": "Plein écran",
+    "exitFullscreen": "Quitter le plein écran"
+  },
+  "broadcast": {
+    "dismiss": "Fermer",
+    "title": "Message à tous",
+    "description": "Affiché en haut de chaque page, pour tout le monde, connecté ou non. Laissez vide pour ne rien afficher.",
+    "message": "Message",
+    "level": "Gravité",
+    "post": "Publier le message",
+    "clear": "Retirer le message",
+    "levelInfo": "Information",
+    "levelWarning": "Avertissement",
+    "levelCritical": "Critique",
+    "placeholder": "ex. Nous rencontrons des difficultés avec notre infrastructure serveur et y travaillons.",
+    "posted": "Message publié",
+    "cleared": "Message retiré"
+  }
+}

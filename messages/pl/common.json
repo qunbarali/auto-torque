@@ -1,0 +1,99 @@
+{
+  "brandName": "Auto Torque",
+  "buttons": {
+    "signIn": "Zaloguj się",
+    "save": "Zapisz",
+    "cancel": "Anuluj",
+    "delete": "Usuń",
+    "submit": "Wyślij",
+    "back": "Wstecz",
+    "confirm": "Potwierdź",
+    "saveChanges": "Zapisz zmiany",
+    "edit": "Edytuj",
+    "add": "Dodaj",
+    "gotIt": "Rozumiem"
+  },
+  "contextMenu": {
+    "hint": "Wskazówka: kliknij wiersz prawym przyciskiem, aby zobaczyć akcje",
+    "open": "Otwórz",
+    "openVehicle": "Otwórz pojazd",
+    "openCustomer": "Otwórz klienta",
+    "edit": "Edytuj",
+    "delete": "Usuń"
+  },
+  "form": {
+    "email": "E-mail",
+    "password": "Hasło",
+    "emailPlaceholder": "you@example.com",
+    "name": "Nazwa",
+    "phone": "Telefon",
+    "company": "Firma",
+    "address": "Adres",
+    "notes": "Notatki"
+  },
+  "errors": {
+    "unexpected": "Wystąpił nieoczekiwany błąd. Spróbuj ponownie.",
+    "error": "Błąd"
+  },
+  "terms": {
+    "termsOfService": "Regulamin"
+  },
+  "errorPage": {
+    "title": "Coś poszło nie tak",
+    "description": "Silnik niespodziewanie zgasł. Nasi mechanicy zostali powiadomieni i pracują nad naprawą.",
+    "tryAgain": "Spróbuj ponownie",
+    "backToDashboard": "Wróć do panelu"
+  },
+  "notFoundPage": {
+    "title": "Nie znaleziono strony",
+    "description": "Wygląda na to, że ta część jest jeszcze w warsztacie. Strona, której szukasz, nie istnieje lub została przeniesiona.",
+    "backToDashboard": "Wróć do panelu"
+  },
+  "updateBanner": {
+    "updated": "Auto Torque zaktualizowano do wersji {version}",
+    "whatsNew": "Zobacz nowości",
+    "dismiss": "Zamknij"
+  },
+  "pagination": {
+    "showing": "Wyświetlane {start}–{end} z {total}",
+    "perPage": "na stronę",
+    "pageOf": "Strona {page} z {pages}",
+    "first": "Pierwsza strona",
+    "previous": "Poprzednia strona",
+    "next": "Następna strona",
+    "last": "Ostatnia strona"
+  },
+  "shared": {
+    "close": "Zamknij",
+    "viewPlans": "Zobacz plany",
+    "manageLicense": "Zarządzaj licencją",
+    "installOwn": "Zainstaluj własną",
+    "install": "Zainstaluj",
+    "installApp": "Zainstaluj aplikację",
+    "installTorqvoice": "Zainstaluj Auto Torque",
+    "dismiss": "Zamknij",
+    "useCamera": "Użyj aparatu",
+    "enterManually": "Wprowadź ręcznie",
+    "enterBarcode": "Wprowadź kod kreskowy…",
+    "scanHint": "Skieruj aparat na kod kreskowy albo wprowadź go ręcznie",
+    "iosInstallHint": "Dotknij Udostępnij > Do ekranu początkowego",
+    "installDescription": "Dodaj do ekranu głównego, aby mieć szybki dostęp",
+    "enterFullscreen": "Pełny ekran",
+    "exitFullscreen": "Zamknij pełny ekran"
+  },
+  "broadcast": {
+    "dismiss": "Zamknij",
+    "title": "Komunikat dla wszystkich",
+    "description": "Wyświetlany na górze każdej strony, wszystkim, zalogowanym i nie. Zostaw puste, aby nic nie pokazywać.",
+    "message": "Komunikat",
+    "level": "Waga",
+    "post": "Opublikuj komunikat",
+    "clear": "Usuń komunikat",
+    "levelInfo": "Informacja",
+    "levelWarning": "Ostrzeżenie",
+    "levelCritical": "Krytyczny",
+    "placeholder": "np. Mamy problemy z infrastrukturą serwerową i pracujemy nad nimi.",
+    "posted": "Komunikat opublikowany",
+    "cleared": "Komunikat usunięty"
+  }
+}

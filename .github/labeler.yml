@@ -1,0 +1,12 @@
+torqvoice:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/**
+          - prisma/**
+          - package.json
+
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '*.md'
+          - docs/**

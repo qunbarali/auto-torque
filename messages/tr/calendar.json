@@ -1,0 +1,82 @@
+{
+  "weekdays": {
+    "sun": "Paz",
+    "mon": "Pzt",
+    "tue": "Sal",
+    "wed": "Çar",
+    "thu": "Per",
+    "fri": "Cum",
+    "sat": "Cmt"
+  },
+  "months": {
+    "january": "Ocak",
+    "february": "Şubat",
+    "march": "Mart",
+    "april": "Nisan",
+    "may": "Mayıs",
+    "june": "Haziran",
+    "july": "Temmuz",
+    "august": "Ağustos",
+    "september": "Eylül",
+    "october": "Ekim",
+    "november": "Kasım",
+    "december": "Aralık"
+  },
+  "stats": {
+    "services": "Servisler",
+    "overdue": "Gecikmiş",
+    "pendingQuotes": "Bekleyen teklifler",
+    "revenue": "Gelir"
+  },
+  "today": "Bugün",
+  "workOrder": "İş emri",
+  "filters": {
+    "services": "Servisler",
+    "reminders": "Hatırlatıcılar",
+    "quotes": "Teklifler",
+    "messages": "Mesajlar"
+  },
+  "selectVehicle": "İş emri için araç seçin",
+  "dateChoice": {
+    "title": "Work Order Date",
+    "description": "You have {selectedDate} selected. Which date should this work order be for?",
+    "useSelected": "Use {date}",
+    "useToday": "Use today"
+  },
+  "more": "+ {count} daha",
+  "monthTotal": "bu ay {count} kayıt",
+  "contextMenu": {
+    "newWorkOrder": "Yeni iş emri",
+    "newReminder": "Yeni hatırlatıcı",
+    "newQuote": "Yeni teklif",
+    "openEvent": "Aç ({count})",
+    "hint": "İpucu: işlemler için bir güne sağ tıklayın",
+    "scheduleMessage": "Mesaj planla"
+  },
+  "events": {
+    "status": {
+      "completed": "Tamamlandı",
+      "inProgress": "Devam ediyor",
+      "waitingParts": "Parça bekleniyor",
+      "pending": "Beklemede",
+      "sent": "Gönderildi",
+      "approved": "Onaylandı",
+      "draft": "Taslak",
+      "done": "Bitti",
+      "overdue": "Gecikmiş",
+      "upcoming": "Yaklaşan",
+      "failed": "Başarısız",
+      "queued": "Sırada"
+    },
+    "type": {
+      "service": "Servis",
+      "reminder": "Hatırlatıcı",
+      "quote": "Teklif",
+      "message": "Mesaj"
+    },
+    "noEvents": "Etkinlik yok",
+    "selectDay": "Etkinliği olan bir gün seçin veya yeni bir iş emri oluşturun."
+  },
+  "previousMonth": "Previous month",
+  "nextMonth": "Next month"
+}

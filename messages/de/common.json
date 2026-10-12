@@ -1,0 +1,99 @@
+{
+  "brandName": "Auto Torque",
+  "buttons": {
+    "signIn": "Anmelden",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "submit": "Absenden",
+    "back": "Zurück",
+    "confirm": "Bestätigen",
+    "saveChanges": "Änderungen speichern",
+    "edit": "Bearbeiten",
+    "add": "Hinzufügen",
+    "gotIt": "Verstanden"
+  },
+  "contextMenu": {
+    "hint": "Tipp: Rechtsklick auf eine Zeile für Aktionen",
+    "open": "Öffnen",
+    "openVehicle": "Fahrzeug öffnen",
+    "openCustomer": "Kunde öffnen",
+    "edit": "Bearbeiten",
+    "delete": "Löschen"
+  },
+  "form": {
+    "email": "E-Mail",
+    "password": "Passwort",
+    "emailPlaceholder": "you@example.com",
+    "name": "Name",
+    "phone": "Telefon",
+    "company": "Firma",
+    "address": "Adresse",
+    "notes": "Notizen"
+  },
+  "errors": {
+    "unexpected": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+    "error": "Fehler"
+  },
+  "terms": {
+    "termsOfService": "Nutzungsbedingungen"
+  },
+  "errorPage": {
+    "title": "Etwas ist schiefgelaufen",
+    "description": "Der Motor ist unerwartet abgewürgt. Unsere Mechaniker wurden benachrichtigt und arbeiten bereits daran.",
+    "tryAgain": "Erneut versuchen",
+    "backToDashboard": "Zurück zum Dashboard"
+  },
+  "notFoundPage": {
+    "title": "Seite nicht gefunden",
+    "description": "Sieht aus, als wäre dieses Teil noch in der Werkstatt. Die Seite, die Sie suchen, existiert nicht oder wurde verschoben.",
+    "backToDashboard": "Zurück zum Dashboard"
+  },
+  "updateBanner": {
+    "updated": "Auto Torque wurde auf {version} aktualisiert",
+    "whatsNew": "Neuigkeiten ansehen",
+    "dismiss": "Schließen"
+  },
+  "pagination": {
+    "showing": "{start}–{end} von {total}",
+    "perPage": "pro Seite",
+    "pageOf": "Seite {page} von {pages}",
+    "first": "Erste Seite",
+    "previous": "Vorherige Seite",
+    "next": "Nächste Seite",
+    "last": "Letzte Seite"
+  },
+  "shared": {
+    "close": "Schließen",
+    "viewPlans": "Tarife ansehen",
+    "manageLicense": "Lizenz verwalten",
+    "installOwn": "Eigene Instanz installieren",
+    "install": "Installieren",
+    "installApp": "App installieren",
+    "installTorqvoice": "Auto Torque installieren",
+    "dismiss": "Schließen",
+    "useCamera": "Kamera verwenden",
+    "enterManually": "Manuell eingeben",
+    "enterBarcode": "Barcode eingeben…",
+    "scanHint": "Richten Sie die Kamera auf einen Barcode oder geben Sie ihn manuell ein",
+    "iosInstallHint": "Auf Teilen > Zum Home-Bildschirm tippen",
+    "installDescription": "Zum Home-Bildschirm hinzufügen für schnellen Zugriff",
+    "enterFullscreen": "Vollbild",
+    "exitFullscreen": "Vollbild beenden"
+  },
+  "broadcast": {
+    "dismiss": "Schließen",
+    "title": "Hinweis an alle",
+    "description": "Wird oben auf jeder Seite angezeigt, für alle, ob angemeldet oder nicht. Leer lassen für keinen Hinweis.",
+    "message": "Nachricht",
+    "level": "Dringlichkeit",
+    "post": "Hinweis veröffentlichen",
+    "clear": "Hinweis entfernen",
+    "levelInfo": "Information",
+    "levelWarning": "Warnung",
+    "levelCritical": "Kritisch",
+    "placeholder": "z. B. Wir haben Probleme mit unserer Serverinfrastruktur und arbeiten daran.",
+    "posted": "Hinweis veröffentlicht",
+    "cleared": "Hinweis entfernt"
+  }
+}

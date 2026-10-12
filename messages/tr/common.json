@@ -1,0 +1,99 @@
+{
+  "brandName": "Auto Torque",
+  "buttons": {
+    "signIn": "Giriş Yap",
+    "save": "Kaydet",
+    "cancel": "İptal",
+    "delete": "Sil",
+    "submit": "Gönder",
+    "back": "Geri",
+    "confirm": "Onayla",
+    "saveChanges": "Değişiklikleri Kaydet",
+    "edit": "Düzenle",
+    "add": "Ekle",
+    "gotIt": "Anladım"
+  },
+  "contextMenu": {
+    "hint": "İpucu: işlemler için bir satıra sağ tıklayın",
+    "open": "Aç",
+    "openVehicle": "Aracı aç",
+    "openCustomer": "Müşteriyi aç",
+    "edit": "Düzenle",
+    "delete": "Sil"
+  },
+  "form": {
+    "email": "E-posta",
+    "password": "Şifre",
+    "emailPlaceholder": "you@example.com",
+    "name": "Ad",
+    "phone": "Telefon",
+    "company": "Şirket",
+    "address": "Adres",
+    "notes": "Notlar"
+  },
+  "errors": {
+    "unexpected": "Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.",
+    "error": "Hata"
+  },
+  "terms": {
+    "termsOfService": "Kullanım Koşulları"
+  },
+  "errorPage": {
+    "title": "Bir Şeyler Ters Gitti",
+    "description": "Motor beklenmedik bir şekilde durdu. Teknisyenlerimiz bilgilendirildi ve üzerinde çalışıyorlar.",
+    "tryAgain": "Tekrar Dene",
+    "backToDashboard": "Panele Dön"
+  },
+  "notFoundPage": {
+    "title": "Sayfa Bulunamadı",
+    "description": "Bu parça hâlâ atölyede gibi görünüyor. Aradığınız sayfa mevcut değil veya taşınmış olabilir.",
+    "backToDashboard": "Panele Dön"
+  },
+  "updateBanner": {
+    "updated": "Auto Torque {version} sürümüne güncellendi",
+    "whatsNew": "Yenilikleri gör",
+    "dismiss": "Kapat"
+  },
+  "pagination": {
+    "showing": "{total} kayıttan {start}–{end} gösteriliyor",
+    "perPage": "sayfa başına",
+    "pageOf": "Sayfa {page}/{pages}",
+    "first": "İlk sayfa",
+    "previous": "Önceki sayfa",
+    "next": "Sonraki sayfa",
+    "last": "Son sayfa"
+  },
+  "shared": {
+    "close": "Kapat",
+    "viewPlans": "Planlara bak",
+    "manageLicense": "Lisansı yönet",
+    "installOwn": "Kendinizinkini kurun",
+    "install": "Kur",
+    "installApp": "Uygulamayı kur",
+    "installTorqvoice": "Auto Torque'i kur",
+    "dismiss": "Kapat",
+    "useCamera": "Kamerayı kullan",
+    "enterManually": "Elle gir",
+    "enterBarcode": "Barkod girin…",
+    "scanHint": "Kamerayı bir barkoda doğrultun ya da elle girin",
+    "iosInstallHint": "Paylaş > Ana Ekrana Ekle'ye dokunun",
+    "installDescription": "Hızlı erişim için ana ekranınıza ekleyin",
+    "enterFullscreen": "Tam ekran",
+    "exitFullscreen": "Tam ekrandan çık"
+  },
+  "broadcast": {
+    "dismiss": "Kapat",
+    "title": "Herkese duyuru",
+    "description": "Her sayfanın üstünde, oturum açmış olsun olmasın herkese gösterilir. Duyuru istemiyorsanız boş bırakın.",
+    "message": "Mesaj",
+    "level": "Önem",
+    "post": "Duyuruyu yayınla",
+    "clear": "Duyuruyu kaldır",
+    "levelInfo": "Bilgi",
+    "levelWarning": "Uyarı",
+    "levelCritical": "Kritik",
+    "placeholder": "ör. Sunucu altyapımızda sorun yaşıyoruz ve üzerinde çalışıyoruz.",
+    "posted": "Duyuru yayınlandı",
+    "cleared": "Duyuru kaldırıldı"
+  }
+}

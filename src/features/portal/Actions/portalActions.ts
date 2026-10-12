@@ -1,0 +1,544 @@
+'use server'
+
+import { toSafeDate } from '@/lib/invoice-utils'
+import { db } from '@/lib/db'
+import { getCustomerSession, type CustomerSessionData } from '@/lib/customer-session'
+import { notify } from '@/lib/notify'
+import { sendServiceRequestAlert } from '@/features/portal/Lib/sendServiceRequestAlert'
+import { withAuth, type ActionResult } from '@/lib/with-auth'
+import { revalidatePath } from 'next/cache'
+import { PermissionAction, PermissionSubject } from '@/lib/permissions'
+
+type PortalResult<T = unknown> = {
+  success: boolean
+  data?: T
+  error?: string
+}
+
+async function withPortalAuth<T>(
+  action: (session: CustomerSessionData) => Promise<T>
+): Promise<PortalResult<T>> {
+  try {
+    const session = await getCustomerSession()
+
+    if (!session) {
+      return { success: false, error: 'Not authenticated' }
+    }
+
+    const data = await action(session)
+    return { success: true, data }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'An unexpected error occurred'
+    console.error('[portalAction]', message)
+    return { success: false, error: message }
+  }
+}
+
+// ─── Dashboard ────────────────────────────────────────────────────────────
+
+export async function getPortalDashboard() {
+  return withPortalAuth(async ({ customerId, organizationId }) => {
+    const [customer, vehicles, recentInvoices, activeJobs, recentQuotes, pendingRequests] =
+      await Promise.all([
+        db.customer.findUnique({
+          where: { id: customerId },
+          select: { name: true, email: true },
+        }),
+        db.vehicle.findMany({
+          where: { customerId, organizationId },
+          select: { id: true },
+        }),
+        // Recent INVOICES: only completed records — anything before that
+        // is still a work-order in progress and not really an invoice yet.
+        db.serviceRecord.findMany({
+          where: {
+            organizationId,
+            OR: [{ vehicle: { customerId } }, { customerId }],
+            status: 'completed',
+          },
+          select: {
+            id: true,
+            title: true,
+            invoiceNumber: true,
+            status: true,
+            totalAmount: true,
+            serviceDate: true,
+            startDateTime: true,
+            publicToken: true,
+            vehicle: { select: { make: true, model: true } },
+          },
+          orderBy: [{ startDateTime: { sort: 'desc', nulls: 'last' } }, { serviceDate: 'desc' }],
+          take: 5,
+        }),
+        // Active jobs: work currently being done on the customer's vehicles.
+        db.serviceRecord.findMany({
+          where: {
+            organizationId,
+            OR: [{ vehicle: { customerId } }, { customerId }],
+            status: { in: ['pending', 'in-progress', 'waiting-parts'] },
+          },
+          select: {
+            id: true,
+            title: true,
+            status: true,
+            startDateTime: true,
+            serviceDate: true,
+            vehicle: { select: { make: true, model: true } },
+          },
+          orderBy: [{ startDateTime: { sort: 'desc', nulls: 'last' } }, { serviceDate: 'desc' }],
+          take: 5,
+        }),
+        db.quote.findMany({
+          where: { customerId, organizationId },
+          select: {
+            id: true,
+            title: true,
+            quoteNumber: true,
+            status: true,
+            totalAmount: true,
+            validUntil: true,
+            publicToken: true,
+            vehicle: { select: { make: true, model: true } },
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 5,
+        }),
+        db.serviceRequest.findMany({
+          where: { customerId, organizationId, status: 'pending' },
+          select: {
+            id: true,
+            description: true,
+            preferredDate: true,
+            status: true,
+            createdAt: true,
+            vehicle: { select: { make: true, model: true } },
+          },
+          orderBy: { createdAt: 'desc' },
+        }),
+      ])
+
+    // Open invoices: completed records that the customer still owes money on.
+    // Pre-completion records are not counted — they're not yet invoices.
+    const completedInvoices = await db.serviceRecord.findMany({
+      where: {
+        organizationId,
+        OR: [{ vehicle: { customerId } }, { customerId }],
+        status: 'completed',
+      },
+      select: {
+        totalAmount: true,
+        manuallyPaid: true,
+        payments: { select: { amount: true } },
+      },
+    })
+
+    const openInvoiceCount = completedInvoices.filter((inv) => {
+      if (inv.manuallyPaid) return false
+      const paid = inv.payments.reduce((sum, p) => sum + p.amount, 0)
+      return paid < inv.totalAmount
+    }).length
+
+    const pendingQuoteCount = await db.quote.count({
+      where: { customerId, organizationId, status: 'sent' },
+    })
+
+    return {
+      customer,
+      vehicleCount: vehicles.length,
+      openInvoiceCount,
+      pendingQuoteCount,
+      recentInvoices,
+      activeJobs,
+      recentQuotes,
+      pendingRequests,
+    }
+  })
+}
+
+// ─── Vehicles ─────────────────────────────────────────────────────────────
+
+export async function getPortalVehicles() {
+  return withPortalAuth(async ({ customerId, organizationId }) => {
+    const vehicles = await db.vehicle.findMany({
+      where: { customerId, organizationId, isArchived: false },
+      select: {
+        id: true,
+        make: true,
+        model: true,
+        year: true,
+        licensePlate: true,
+        color: true,
+        // The workshop's vehicle photo is internal — never sent to customers.
+        _count: {
+          select: {
+            serviceRecords: true,
+            inspections: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+    return vehicles
+  })
+}
+
+export async function getPortalVehicleDetail(vehicleId: string) {
+  return withPortalAuth(async ({ customerId, organizationId }) => {
+    const vehicle = await db.vehicle.findFirst({
+      where: { id: vehicleId, customerId, organizationId },
+      select: {
+        id: true,
+        make: true,
+        model: true,
+        year: true,
+        vin: true,
+        licensePlate: true,
+        color: true,
+        mileage: true,
+        fuelType: true,
+        transmission: true,
+        serviceRecords: {
+          select: {
+            id: true,
+            title: true,
+            invoiceNumber: true,
+            status: true,
+            totalAmount: true,
+            serviceDate: true,
+            startDateTime: true,
+            publicToken: true,
+            mileage: true,
+            warrantyMonths: true,
+            warrantyMileage: true,
+            warrantyExpiresAt: true,
+            warrantyNotes: true,
+          },
+          orderBy: [{ startDateTime: { sort: 'desc', nulls: 'last' } }, { serviceDate: 'desc' }],
+        },
+        inspections: {
+          select: {
+            id: true,
+            status: true,
+            completedAt: true,
+            publicToken: true,
+            createdAt: true,
+            template: { select: { name: true } },
+            items: { select: { condition: true } },
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+    })
+
+    if (!vehicle) {
+      throw new Error('Vehicle not found')
+    }
+
+    return vehicle
+  })
+}
+
+// ─── Invoices ─────────────────────────────────────────────────────────────
+
+export async function getPortalInvoices() {
+  return withPortalAuth(async ({ customerId, organizationId }) => {
+    // Only completed records are surfaced as "invoices" to customers.
+    // In-progress / pending / waiting-parts records are work orders, not
+    // invoices, and showing them here causes confusion (prices may still
+    // change, customer can't act on them).
+    const invoices = await db.serviceRecord.findMany({
+      where: {
+        organizationId,
+        OR: [{ vehicle: { customerId } }, { customerId }],
+        status: 'completed',
+      },
+      select: {
+        id: true,
+        title: true,
+        invoiceNumber: true,
+        status: true,
+        totalAmount: true,
+        serviceDate: true,
+        startDateTime: true,
+        publicToken: true,
+        manuallyPaid: true,
+        vehicle: { select: { make: true, model: true } },
+        payments: { select: { amount: true } },
+      },
+      orderBy: [{ startDateTime: { sort: 'desc', nulls: 'last' } }, { serviceDate: 'desc' }],
+    })
+    return invoices
+  })
+}
+
+// ─── Quotes ───────────────────────────────────────────────────────────────
+
+export async function getPortalQuotes() {
+  return withPortalAuth(async ({ customerId, organizationId }) => {
+    const quotes = await db.quote.findMany({
+      where: { customerId, organizationId },
+      select: {
+        id: true,
+        title: true,
+        quoteNumber: true,
+        status: true,
+        totalAmount: true,
+        validUntil: true,
+        publicToken: true,
+        vehicle: { select: { make: true, model: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+    return quotes
+  })
+}
+
+// ─── Inspections ──────────────────────────────────────────────────────────
+
+export async function getPortalInspections() {
+  return withPortalAuth(async ({ customerId, organizationId }) => {
+    const inspections = await db.inspection.findMany({
+      where: {
+        vehicle: { customerId, organizationId },
+      },
+      select: {
+        id: true,
+        status: true,
+        completedAt: true,
+        publicToken: true,
+        createdAt: true,
+        vehicle: { select: { make: true, model: true, licensePlate: true } },
+        template: { select: { name: true } },
+        items: { select: { condition: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+    return inspections
+  })
+}
+
+// ─── Service Requests ─────────────────────────────────────────────────────
+
+export async function createServiceRequest(input: {
+  vehicleId?: string
+  /**
+   * A vehicle the workshop doesn't know yet. It is created on the customer's
+   * profile so the request — and everything downstream (work orders, history)
+   * — hangs off a real vehicle record from day one.
+   */
+  newVehicle?: {
+    make: string
+    model: string
+    year?: number
+    licensePlate?: string
+  }
+  description: string
+  preferredDate?: string
+}) {
+  return withPortalAuth(async ({ customerId, organizationId }) => {
+    let vehicle: { id: string; make: string; model: string; licensePlate: string | null } | null =
+      null
+
+    if (input.vehicleId) {
+      // Validate vehicle belongs to customer
+      vehicle = await db.vehicle.findFirst({
+        where: { id: input.vehicleId, customerId, organizationId },
+        select: { id: true, make: true, model: true, licensePlate: true },
+      })
+    } else if (input.newVehicle) {
+      const make = input.newVehicle.make?.trim().slice(0, 60)
+      const model = input.newVehicle.model?.trim().slice(0, 60)
+      const licensePlate = input.newVehicle.licensePlate?.trim().slice(0, 20) || null
+      const currentYear = new Date().getFullYear()
+      const year =
+        Number.isInteger(input.newVehicle.year) &&
+        (input.newVehicle.year as number) >= 1900 &&
+        (input.newVehicle.year as number) <= currentYear + 1
+          ? (input.newVehicle.year as number)
+          : currentYear
+      if (!make || !model) {
+        throw new Error('Vehicle make and model are required')
+      }
+      // Vehicles carry an owning app user; portal customers are not users, so
+      // the record is filed under the organization's owner.
+      const ownerMember = await db.organizationMember.findFirst({
+        where: { organizationId, role: 'owner' },
+        select: { userId: true },
+      })
+      const anyMember =
+        ownerMember ??
+        (await db.organizationMember.findFirst({
+          where: { organizationId },
+          select: { userId: true },
+        }))
+      if (!anyMember) {
+        throw new Error('Organization has no members')
+      }
+      vehicle = await db.vehicle.create({
+        data: {
+          make,
+          model,
+          year,
+          licensePlate,
+          userId: anyMember.userId,
+          organizationId,
+          customerId,
+        },
+        select: { id: true, make: true, model: true, licensePlate: true },
+      })
+    }
+
+    if (!vehicle) {
+      throw new Error('Vehicle not found')
+    }
+
+    const customer = await db.customer.findUnique({
+      where: { id: customerId },
+      select: { name: true, email: true, phone: true },
+    })
+
+    const serviceRequest = await db.serviceRequest.create({
+      data: {
+        description: input.description,
+        preferredDate: toSafeDate(input.preferredDate) ?? null,
+        customerId,
+        vehicleId: vehicle.id,
+        organizationId,
+      },
+    })
+
+    // Notify staff
+    const vehicleName = `${vehicle.make} ${vehicle.model}`
+    const customerName = customer?.name ?? 'A customer'
+    // The plate is what the workshop actually looks a car up by, so it goes in
+    // the email even though the in-app message stays short.
+    const vehicleLabel = vehicle.licensePlate
+      ? `${vehicleName} (${vehicle.licensePlate})`
+      : vehicleName
+
+    await notify({
+      organizationId,
+      type: 'service_request',
+      title: 'New Service Request',
+      message: `${customerName} requested service for ${vehicleName}: ${input.description.slice(0, 100)}`,
+      entityType: 'service_request',
+      entityId: serviceRequest.id,
+      entityUrl: `/customers/${customerId}?tab=requests`,
+    })
+
+    // Email the workshop, if it asked to be emailed. Isolated on purpose: the
+    // request is committed and the bell has already rung, so a misconfigured
+    // mail provider must not surface to the customer as a failed submission.
+    // sendServiceRequestAlert swallows its own errors; this is the backstop for
+    // anything it cannot anticipate.
+    try {
+      await sendServiceRequestAlert({
+        organizationId,
+        customerId,
+        customerName,
+        customerEmail: customer?.email ?? null,
+        customerPhone: customer?.phone ?? null,
+        vehicleLabel,
+        description: input.description,
+        preferredDate: serviceRequest.preferredDate,
+      })
+    } catch (error) {
+      console.error('[createServiceRequest] alert email failed:', error)
+    }
+
+    return serviceRequest
+  })
+}
+
+export async function getPortalServiceRequests() {
+  return withPortalAuth(async ({ customerId, organizationId }) => {
+    const requests = await db.serviceRequest.findMany({
+      where: { customerId, organizationId },
+      select: {
+        id: true,
+        description: true,
+        preferredDate: true,
+        status: true,
+        adminNotes: true,
+        createdAt: true,
+        vehicle: { select: { make: true, model: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+    return requests
+  })
+}
+
+// ─── Admin: Portal Slug ──────────────────────────────────────────────────
+
+const SLUG_REGEX = /^[a-z0-9][a-z0-9_-]{1,46}[a-z0-9]$/
+const RESERVED_SLUGS = [
+  'auth',
+  'api',
+  'admin',
+  'login',
+  'verify',
+  'dashboard',
+  'settings',
+  'portal',
+]
+
+export async function updatePortalSlug(slug: string | null): Promise<ActionResult> {
+  return withAuth(
+    async ({ organizationId }) => {
+      // Allow clearing the slug
+      if (!slug || slug.trim() === '') {
+        await db.organization.update({
+          where: { id: organizationId },
+          data: { portalSlug: null },
+        })
+        revalidatePath('/settings/customer-portal')
+        return { slug: null }
+      }
+
+      const normalized = slug.trim().toLowerCase()
+
+      if (!SLUG_REGEX.test(normalized)) {
+        throw new Error(
+          'Slug must be 3–48 characters, lowercase alphanumeric, hyphens, or underscores.'
+        )
+      }
+
+      if (RESERVED_SLUGS.includes(normalized)) {
+        throw new Error('This slug is reserved. Please choose another.')
+      }
+
+      // Check uniqueness
+      const existing = await db.organization.findUnique({
+        where: { portalSlug: normalized },
+        select: { id: true },
+      })
+
+      if (existing && existing.id !== organizationId) {
+        throw new Error('This slug is already taken. Please choose another.')
+      }
+
+      await db.organization.update({
+        where: { id: organizationId },
+        data: { portalSlug: normalized },
+      })
+
+      revalidatePath('/settings/customer-portal')
+      return { slug: normalized || null }
+    },
+    {
+      requiredPermissions: [
+        { action: PermissionAction.UPDATE, subject: PermissionSubject.SETTINGS },
+      ],
+      audit: ({ result }) =>
+        result
+          ? {
+              action: 'settings.updatePortalSlug',
+              entity: 'Organization',
+              message: result.slug ? `Set portal slug to "${result.slug}"` : 'Cleared portal slug',
+              metadata: { slug: result.slug },
+            }
+          : null,
+    }
+  )
+}

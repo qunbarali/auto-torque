@@ -1,0 +1,82 @@
+{
+  "weekdays": {
+    "sun": "Dom",
+    "mon": "Lun",
+    "tue": "Mar",
+    "wed": "Mié",
+    "thu": "Jue",
+    "fri": "Vie",
+    "sat": "Sáb"
+  },
+  "months": {
+    "january": "Enero",
+    "february": "Febrero",
+    "march": "Marzo",
+    "april": "Abril",
+    "may": "Mayo",
+    "june": "Junio",
+    "july": "Julio",
+    "august": "Agosto",
+    "september": "Septiembre",
+    "october": "Octubre",
+    "november": "Noviembre",
+    "december": "Diciembre"
+  },
+  "stats": {
+    "services": "Servicios",
+    "overdue": "Vencidos",
+    "pendingQuotes": "Presupuestos pendientes",
+    "revenue": "Ingresos"
+  },
+  "today": "Hoy",
+  "workOrder": "Orden de trabajo",
+  "filters": {
+    "services": "Servicios",
+    "reminders": "Recordatorios",
+    "quotes": "Presupuestos",
+    "messages": "Mensajes"
+  },
+  "selectVehicle": "Seleccionar vehículo para orden de trabajo",
+  "dateChoice": {
+    "title": "Work Order Date",
+    "description": "You have {selectedDate} selected. Which date should this work order be for?",
+    "useSelected": "Use {date}",
+    "useToday": "Use today"
+  },
+  "more": "+ {count} más",
+  "monthTotal": "{count} eventos este mes",
+  "contextMenu": {
+    "newWorkOrder": "Nueva orden de trabajo",
+    "newReminder": "Nuevo recordatorio",
+    "newQuote": "Nuevo presupuesto",
+    "openEvent": "Abrir ({count})",
+    "hint": "Consejo: haz clic derecho en un día para ver las acciones",
+    "scheduleMessage": "Programar mensaje"
+  },
+  "events": {
+    "status": {
+      "completed": "Completado",
+      "inProgress": "En progreso",
+      "waitingParts": "Esperando piezas",
+      "pending": "Pendiente",
+      "sent": "Enviado",
+      "approved": "Aprobado",
+      "draft": "Borrador",
+      "done": "Hecho",
+      "overdue": "Vencido",
+      "upcoming": "Próximo",
+      "failed": "Fallido",
+      "queued": "En cola"
+    },
+    "type": {
+      "service": "Servicio",
+      "reminder": "Recordatorio",
+      "quote": "Presupuesto",
+      "message": "Mensaje"
+    },
+    "noEvents": "Sin eventos",
+    "selectDay": "Seleccione un día con eventos o cree una nueva orden de trabajo."
+  },
+  "previousMonth": "Previous month",
+  "nextMonth": "Next month"
+}

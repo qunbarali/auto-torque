@@ -1,0 +1,105 @@
+import { getCachedSession, getCachedMembership } from './cached-session'
+import { db } from './db'
+import { SETTING_KEYS } from '@/features/settings/Schema/settingsSchema'
+
+type AuthResult =
+  | { status: 'unauthenticated' }
+  | { status: 'no-organization' }
+  | {
+      status: 'ok'
+      userId: string
+      organizationId: string
+      /** When the active workshop signed up, for age-gated announcements. */
+      organizationCreatedAt: Date | null
+      role: string
+      isSuperAdmin: boolean
+      emailVerified: boolean
+      lastSeenVersion: string | null
+      companyLogo: string | undefined
+      dateFormat: string | undefined
+      timeFormat: string | undefined
+      timezone: string | undefined
+      weekStartDay: number
+      serviceType: string | undefined
+      currencyCode: string | undefined
+      currencyFormat: string | undefined
+      organizations: { id: string; name: string; role: string }[]
+    }
+
+export async function getLayoutData(): Promise<AuthResult> {
+  const session = await getCachedSession()
+  if (!session?.user?.id) return { status: 'unauthenticated' }
+
+  const [membership, user] = await Promise.all([
+    getCachedMembership(session.user.id),
+    db.user.findUnique({
+      where: { id: session.user.id },
+      select: { isSuperAdmin: true, emailVerified: true, lastSeenVersion: true },
+    }),
+  ])
+
+  // User record deleted (e.g. admin removed the account) but session cookie still cached
+  if (!user) return { status: 'unauthenticated' }
+
+  const isSuperAdmin = user.isSuperAdmin
+
+  if (!membership && !isSuperAdmin) return { status: 'no-organization' }
+
+  const [orgSettings, memberships] = await Promise.all([
+    membership
+      ? db.appSetting.findMany({
+          where: {
+            organizationId: membership.organizationId,
+            key: {
+              in: [
+                SETTING_KEYS.COMPANY_LOGO,
+                SETTING_KEYS.DATE_FORMAT,
+                SETTING_KEYS.TIME_FORMAT,
+                SETTING_KEYS.TIMEZONE,
+                SETTING_KEYS.WORKBOARD_WEEK_START_DAY,
+                SETTING_KEYS.SERVICE_TYPE,
+                SETTING_KEYS.CURRENCY_CODE,
+                SETTING_KEYS.CURRENCY_FORMAT,
+              ],
+            },
+          },
+          select: { key: true, value: true },
+        })
+      : null,
+    db.organizationMember.findMany({
+      where: { userId: session.user.id },
+      select: {
+        role: true,
+        organization: { select: { id: true, name: true, createdAt: true } },
+      },
+    }),
+  ])
+
+  const orgMap = new Map(orgSettings?.map((s) => [s.key, s.value]) ?? [])
+
+  return {
+    status: 'ok',
+    userId: session.user.id,
+    organizationId: membership?.organizationId ?? '',
+    organizationCreatedAt:
+      memberships.find((m) => m.organization.id === membership?.organizationId)?.organization
+        .createdAt ?? null,
+    role: isSuperAdmin ? 'super_admin' : (membership?.role ?? 'member'),
+    isSuperAdmin,
+    emailVerified: user?.emailVerified ?? false,
+    lastSeenVersion: user?.lastSeenVersion ?? null,
+    companyLogo: orgMap.get(SETTING_KEYS.COMPANY_LOGO) || undefined,
+    dateFormat: orgMap.get(SETTING_KEYS.DATE_FORMAT) || undefined,
+    timeFormat: orgMap.get(SETTING_KEYS.TIME_FORMAT) || undefined,
+    timezone: orgMap.get(SETTING_KEYS.TIMEZONE) || undefined,
+    weekStartDay: parseInt(orgMap.get(SETTING_KEYS.WORKBOARD_WEEK_START_DAY) || '1', 10),
+    serviceType: orgMap.get(SETTING_KEYS.SERVICE_TYPE) || undefined,
+    currencyCode: orgMap.get(SETTING_KEYS.CURRENCY_CODE) || undefined,
+    currencyFormat: orgMap.get(SETTING_KEYS.CURRENCY_FORMAT) || undefined,
+    organizations: memberships.map((m) => ({
+      id: m.organization.id,
+      name: m.organization.name,
+      role: m.role,
+    })),
+  }
+}

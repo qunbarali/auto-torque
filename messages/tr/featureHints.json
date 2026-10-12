@@ -1,0 +1,15 @@
+{
+  "tire-hotel": {
+    "title": "Lastik oteli açık",
+    "body": "Sezonluk lastikleri saklayın. Rafları kurun, sonra takım kabul edin."
+  },
+  "telegram": {
+    "title": "Telegram açık",
+    "body": "Müşteri konuşmaları buraya düşer. Uygulamadan çıkmadan yanıtlayın."
+  },
+  "invoice-designer": {
+    "title": "Faturalar yenilendi",
+    "body": "Faturalarınızın ve tekliflerinizin düzenini, renklerini ve yazı tiplerini Şablonlar altındaki yeni tasarımcıda belirleyin.",
+    "cta": "Şablonları aç"
+  }
+}

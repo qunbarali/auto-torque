@@ -1,0 +1,99 @@
+{
+  "brandName": "Auto Torque",
+  "buttons": {
+    "signIn": "Inloggen",
+    "save": "Opslaan",
+    "cancel": "Annuleren",
+    "delete": "Verwijderen",
+    "submit": "Verzenden",
+    "back": "Terug",
+    "confirm": "Bevestigen",
+    "saveChanges": "Wijzigingen opslaan",
+    "edit": "Bewerken",
+    "add": "Toevoegen",
+    "gotIt": "Duidelijk"
+  },
+  "contextMenu": {
+    "hint": "Tip: rechtsklik op een rij voor acties",
+    "open": "Openen",
+    "openVehicle": "Voertuig openen",
+    "openCustomer": "Klant openen",
+    "edit": "Bewerken",
+    "delete": "Verwijderen"
+  },
+  "form": {
+    "email": "E-mail",
+    "password": "Wachtwoord",
+    "emailPlaceholder": "you@example.com",
+    "name": "Naam",
+    "phone": "Telefoon",
+    "company": "Bedrijf",
+    "address": "Adres",
+    "notes": "Notities"
+  },
+  "errors": {
+    "unexpected": "Er is een onverwachte fout opgetreden. Probeer het opnieuw.",
+    "error": "Fout"
+  },
+  "terms": {
+    "termsOfService": "Algemene voorwaarden"
+  },
+  "errorPage": {
+    "title": "Er ging iets mis",
+    "description": "De motor is onverwacht afgeslagen. Onze monteurs zijn op de hoogte gebracht en werken eraan.",
+    "tryAgain": "Opnieuw proberen",
+    "backToDashboard": "Terug naar dashboard"
+  },
+  "notFoundPage": {
+    "title": "Pagina niet gevonden",
+    "description": "Het lijkt erop dat dit onderdeel nog in de werkplaats is. De pagina die je zoekt bestaat niet of is verplaatst.",
+    "backToDashboard": "Terug naar dashboard"
+  },
+  "updateBanner": {
+    "updated": "Auto Torque is bijgewerkt naar {version}",
+    "whatsNew": "Bekijk wat er nieuw is",
+    "dismiss": "Sluiten"
+  },
+  "pagination": {
+    "showing": "{start}–{end} van {total} weergegeven",
+    "perPage": "per pagina",
+    "pageOf": "Pagina {page} van {pages}",
+    "first": "Eerste pagina",
+    "previous": "Vorige pagina",
+    "next": "Volgende pagina",
+    "last": "Laatste pagina"
+  },
+  "shared": {
+    "close": "Sluiten",
+    "viewPlans": "Abonnementen bekijken",
+    "manageLicense": "Licentie beheren",
+    "installOwn": "Installeer je eigen",
+    "install": "Installeren",
+    "installApp": "App installeren",
+    "installTorqvoice": "Auto Torque installeren",
+    "dismiss": "Sluiten",
+    "useCamera": "Camera gebruiken",
+    "enterManually": "Handmatig invoeren",
+    "enterBarcode": "Barcode invoeren…",
+    "scanHint": "Richt uw camera op een barcode of voer hem handmatig in",
+    "iosInstallHint": "Tik op Deel > Zet op beginscherm",
+    "installDescription": "Zet de app op je beginscherm voor snelle toegang",
+    "enterFullscreen": "Volledig scherm",
+    "exitFullscreen": "Volledig scherm afsluiten"
+  },
+  "broadcast": {
+    "dismiss": "Sluiten",
+    "title": "Bericht aan iedereen",
+    "description": "Wordt bovenaan elke pagina getoond, aan iedereen, ingelogd of niet. Laat leeg voor geen bericht.",
+    "message": "Bericht",
+    "level": "Ernst",
+    "post": "Bericht plaatsen",
+    "clear": "Bericht verwijderen",
+    "levelInfo": "Informatie",
+    "levelWarning": "Waarschuwing",
+    "levelCritical": "Kritiek",
+    "placeholder": "bijv. We hebben problemen met onze serverinfrastructuur en werken eraan.",
+    "posted": "Bericht geplaatst",
+    "cleared": "Bericht verwijderd"
+  }
+}

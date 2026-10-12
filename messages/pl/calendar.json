@@ -1,0 +1,82 @@
+{
+  "weekdays": {
+    "sun": "Ndz",
+    "mon": "Pon",
+    "tue": "Wt",
+    "wed": "Śr",
+    "thu": "Czw",
+    "fri": "Pt",
+    "sat": "Sob"
+  },
+  "months": {
+    "january": "Styczeń",
+    "february": "Luty",
+    "march": "Marzec",
+    "april": "Kwiecień",
+    "may": "Maj",
+    "june": "Czerwiec",
+    "july": "Lipiec",
+    "august": "Sierpień",
+    "september": "Wrzesień",
+    "october": "Październik",
+    "november": "Listopad",
+    "december": "Grudzień"
+  },
+  "stats": {
+    "services": "Usługi",
+    "overdue": "Zaległe",
+    "pendingQuotes": "Oczekujące wyceny",
+    "revenue": "Przychód"
+  },
+  "today": "Dziś",
+  "workOrder": "Zlecenie",
+  "filters": {
+    "services": "Usługi",
+    "reminders": "Przypomnienia",
+    "quotes": "Wyceny",
+    "messages": "Wiadomości"
+  },
+  "selectVehicle": "Wybierz pojazd do zlecenia",
+  "dateChoice": {
+    "title": "Work Order Date",
+    "description": "You have {selectedDate} selected. Which date should this work order be for?",
+    "useSelected": "Use {date}",
+    "useToday": "Use today"
+  },
+  "more": "+ {count} więcej",
+  "monthTotal": "{count} wydarzeń w tym miesiącu",
+  "contextMenu": {
+    "newWorkOrder": "Nowe zlecenie",
+    "newReminder": "Nowe przypomnienie",
+    "newQuote": "Nowa wycena",
+    "openEvent": "Otwórz ({count})",
+    "hint": "Wskazówka: kliknij dzień prawym przyciskiem myszy, aby zobaczyć akcje",
+    "scheduleMessage": "Zaplanuj wiadomość"
+  },
+  "events": {
+    "status": {
+      "completed": "Ukończono",
+      "inProgress": "W trakcie",
+      "waitingParts": "Oczekiwanie na części",
+      "pending": "Oczekujące",
+      "sent": "Wysłano",
+      "approved": "Zatwierdzone",
+      "draft": "Szkic",
+      "done": "Gotowe",
+      "overdue": "Zaległe",
+      "upcoming": "Nadchodzące",
+      "failed": "Nieudane",
+      "queued": "W kolejce"
+    },
+    "type": {
+      "service": "Usługa",
+      "reminder": "Przypomnienie",
+      "quote": "Wycena",
+      "message": "Wiadomość"
+    },
+    "noEvents": "Brak wydarzeń",
+    "selectDay": "Wybierz dzień z wydarzeniami lub utwórz nowe zlecenie."
+  },
+  "previousMonth": "Previous month",
+  "nextMonth": "Next month"
+}

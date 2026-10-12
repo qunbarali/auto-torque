@@ -1,0 +1,17 @@
+{
+  "error": "No se pudieron cargar los recordatorios",
+  "showing": "Mostrando {count} de {total}",
+  "deleted": "Recordatorio eliminado",
+  "deleteError": "No se pudo eliminar el recordatorio",
+  "vehicle": "Vehículo",
+  "selectVehicle": "Seleccionar vehículo...",
+  "searchVehicle": "Buscar vehículos...",
+  "noVehicle": "No se encontraron vehículos.",
+  "pickDate": "Seleccionar fecha",
+  "openMenu": "Open menu",
+  "relatesTo": "Se refiere a (opcional)",
+  "selectCustomer": "Cliente (opcional)",
+  "noneOption": "Ninguno",
+  "workshopHint": "Sin cliente ni vehículo: este es un recordatorio general del taller.",
+  "workshopReminder": "Taller"
+}

@@ -1,0 +1,11 @@
+{
+  "panel": {
+    "title": "Pranešimai",
+    "markAllRead": "Pažymėti visus kaip skaitytus",
+    "empty": "Pranešimų dar nėra",
+    "confirmDelete": "Ar tikrai?",
+    "delete": "Ištrinti",
+    "cancel": "Atšaukti"
+  },
+  "openNotifications": "Open notifications"
+}

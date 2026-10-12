@@ -1,0 +1,9 @@
+Auto Torque SQLite-only database notes
+
+1. SQLite is the only supported application datasource.
+2. Prisma datasource provider is sqlite and the runtime uses @prisma/adapter-better-sqlite3.
+3. Runtime raw SQL has been audited for PostgreSQL-only syntax and converted to SQLite syntax.
+4. No PostgreSQL driver, container, migration, or deployment workflow is shipped.
+5. Database files use file: URLs and default to auto_torque.sqlite.
+6. Existing torqvoice.sqlite files are adopted as Auto Torque SQLite databases during upgrade.
+7. CI backups use SQLite online backup; rollback restores the SQLite file after stopping the app.

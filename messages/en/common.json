@@ -1,0 +1,99 @@
+{
+  "brandName": "Auto Torque",
+  "buttons": {
+    "signIn": "Sign In",
+    "save": "Save",
+    "saveChanges": "Save Changes",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "submit": "Submit",
+    "back": "Back",
+    "confirm": "Confirm",
+    "edit": "Edit",
+    "add": "Add",
+    "gotIt": "Got it"
+  },
+  "contextMenu": {
+    "hint": "Tip: right-click a row for actions",
+    "open": "Open",
+    "openVehicle": "Open vehicle",
+    "openCustomer": "Open customer",
+    "edit": "Edit",
+    "delete": "Delete"
+  },
+  "form": {
+    "email": "Email",
+    "password": "Password",
+    "emailPlaceholder": "you@example.com",
+    "name": "Name",
+    "phone": "Phone",
+    "company": "Company",
+    "address": "Address",
+    "notes": "Notes"
+  },
+  "errors": {
+    "unexpected": "An unexpected error occurred. Please try again.",
+    "error": "Error"
+  },
+  "terms": {
+    "termsOfService": "Terms of Service"
+  },
+  "errorPage": {
+    "title": "Something Went Wrong",
+    "description": "The engine stalled unexpectedly. Our mechanics have been notified and are working on it.",
+    "tryAgain": "Try Again",
+    "backToDashboard": "Back to Dashboard"
+  },
+  "notFoundPage": {
+    "title": "Page Not Found",
+    "description": "Looks like this part is still in the shop. The page you're looking for doesn't exist or has been moved.",
+    "backToDashboard": "Back to Dashboard"
+  },
+  "updateBanner": {
+    "updated": "Auto Torque has been updated to {version}",
+    "whatsNew": "See what is new",
+    "dismiss": "Dismiss"
+  },
+  "pagination": {
+    "showing": "Showing {start}-{end} of {total}",
+    "perPage": "per page",
+    "pageOf": "Page {page} of {pages}",
+    "first": "First page",
+    "previous": "Previous page",
+    "next": "Next page",
+    "last": "Last page"
+  },
+  "shared": {
+    "close": "Close",
+    "viewPlans": "View Plans",
+    "manageLicense": "Manage License",
+    "installOwn": "Install your own",
+    "install": "Install",
+    "installApp": "Install App",
+    "installTorqvoice": "Install Auto Torque",
+    "dismiss": "Dismiss",
+    "useCamera": "Use camera",
+    "enterManually": "Enter manually",
+    "enterBarcode": "Enter barcode...",
+    "scanHint": "Point your camera at a barcode or enter it manually",
+    "iosInstallHint": "Tap Share > Add to Home Screen",
+    "installDescription": "Add to your home screen for quick access",
+    "enterFullscreen": "Fullscreen",
+    "exitFullscreen": "Exit fullscreen"
+  },
+  "broadcast": {
+    "dismiss": "Dismiss",
+    "title": "Notice to everyone",
+    "description": "Shown at the top of every page, for everyone, signed in or not. Leave it empty for no notice.",
+    "message": "Message",
+    "level": "Severity",
+    "post": "Post notice",
+    "clear": "Clear notice",
+    "levelInfo": "Information",
+    "levelWarning": "Warning",
+    "levelCritical": "Critical",
+    "placeholder": "e.g. We are having trouble with our server infrastructure and are working on it.",
+    "posted": "Notice posted",
+    "cleared": "Notice cleared"
+  }
+}

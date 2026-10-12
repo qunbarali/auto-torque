@@ -1,0 +1,17 @@
+{
+  "error": "Nepavyko įkelti priminimų",
+  "showing": "Rodoma {count} iš {total}",
+  "deleted": "Priminimas ištrintas",
+  "deleteError": "Nepavyko ištrinti priminimo",
+  "vehicle": "Transporto priemonė",
+  "selectVehicle": "Pasirinkite transporto priemonę...",
+  "searchVehicle": "Ieškoti transporto priemonių...",
+  "noVehicle": "Transporto priemonių nerasta.",
+  "pickDate": "Pasirinkite datą",
+  "openMenu": "Open menu",
+  "relatesTo": "Susijęs su (neprivaloma)",
+  "selectCustomer": "Klientas (neprivaloma)",
+  "noneOption": "Nėra",
+  "workshopHint": "Nepasirinktas klientas ar transporto priemonė: tai bendras dirbtuvių priminimas.",
+  "workshopReminder": "Dirbtuvės"
+}

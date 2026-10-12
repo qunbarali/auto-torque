@@ -1,0 +1,78 @@
+{
+  "page": {
+    "featureName": "SMS Messaging",
+    "featureDescription": "Send and receive SMS messages with your customers directly from Auto Torque.",
+    "tabs": {
+      "inbox": "Inbox",
+      "scheduled": "Scheduled",
+      "sms": "SMS",
+      "whatsapp": "WhatsApp",
+      "telegram": "Telegram"
+    },
+    "smsNotConfiguredTitle": "SMS is not set up",
+    "smsNotConfiguredHint": "Connect an SMS provider to send and receive texts here. Scheduled email still works without it.",
+    "goToSmsSettings": "Go to SMS settings"
+  },
+  "notConfigured": {
+    "title": "SMS Not Configured",
+    "description": "Set up an SMS provider to send and receive messages with your customers. Supports Twilio, Vonage, and Telnyx.",
+    "goToSettings": "Go to SMS Settings"
+  },
+  "threads": {
+    "title": "Conversations",
+    "empty": "No conversations yet. Send an SMS from a customer page to start.",
+    "loadMore": "Load more",
+    "selectConversation": "Select a conversation",
+    "you": "You: ",
+    "deleteConversation": "Delete conversation",
+    "deleteTitle": "Delete conversation?",
+    "deleteDescription": "This will permanently delete all messages with {name}. This action cannot be undone.",
+    "deleted": "Conversation deleted",
+    "deleteError": "Failed to delete conversation",
+    "back": "Back",
+    "conversationMenu": "Conversation menu",
+    "searchPlaceholder": "Search conversations",
+    "noSearchResults": "No conversations match your search",
+    "now": "now"
+  },
+  "conversation": {
+    "noPhone": "No phone number on file for {name}. Add a phone number to start messaging.",
+    "loadOlder": "Load older",
+    "empty": "No messages yet. Send the first message to {name}.",
+    "placeholder": "Message {name}...",
+    "deleteMessage": "Delete message",
+    "deleteTitle": "Delete message?",
+    "deleteDescription": "This will permanently delete this message from the conversation. This action cannot be undone.",
+    "messageDeleted": "Message deleted",
+    "deleteError": "Failed to delete message",
+    "sendError": "Failed to send SMS",
+    "sendMessage": "Send message"
+  },
+  "sendDialog": {
+    "send": "Send {label}",
+    "message": "Message",
+    "placeholder": "Type your message...",
+    "characters": "{count} / 1600 characters",
+    "sendSms": "Send SMS",
+    "smsSent": "SMS Sent",
+    "sentTo": "{label} has been sent to {name} ({phone})",
+    "sendError": "Failed to send SMS"
+  },
+  "compose": {
+    "newMessage": "New message",
+    "title": "New message",
+    "searchPlaceholder": "Search customers by name or number",
+    "noMatches": "No customers match your search",
+    "noRecipients": "No customers with a phone number",
+    "noRecipientsHint": "Add a phone number to a customer to text them.",
+    "changeRecipient": "Pick someone else",
+    "messageLabel": "Message",
+    "messagePlaceholder": "Message {name}...",
+    "segments": "{chars} characters · {segments} SMS",
+    "send": "Send",
+    "scheduleInstead": "Schedule instead",
+    "sent": "Sent to {name}",
+    "sendError": "Could not send the message",
+    "templates": "Templates"
+  }
+}

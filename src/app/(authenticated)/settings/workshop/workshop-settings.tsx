@@ -1,0 +1,424 @@
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
+import { UnitCombobox } from '@/features/inventory/Components/UnitCombobox'
+import { AppCard } from '@/components/app-card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+} from '@/components/ui/command'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { toast } from 'sonner'
+import { setSettings } from '@/features/settings/Actions/settingsActions'
+import { SETTING_KEYS } from '@/features/settings/Schema/settingsSchema'
+import { assignTechToUnassignedWorkOrders } from '@/features/workboard/Actions/technicianActions'
+import { Loader2, Ruler, Save, Wrench, Check, ChevronsUpDown, Plus } from 'lucide-react'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { createTechnician } from '@/features/workboard/Actions/technicianActions'
+import { cn } from '@/lib/utils'
+import { ReadOnlyBanner, SaveButton, ReadOnlyWrapper } from '../read-only-guard'
+import { ServiceTypeSelector } from '../company/service-type-selector'
+
+interface TechnicianOption {
+  id: string
+  name: string
+}
+
+export function WorkshopSettings({
+  settings,
+  technicians: initialTechnicians = [],
+}: {
+  settings: Record<string, string>
+  technicians?: TechnicianOption[]
+}) {
+  const router = useRouter()
+  const t = useTranslations('settings')
+  const [saving, setSaving] = useState(false)
+  const [serviceType, setServiceType] = useState(
+    settings[SETTING_KEYS.SERVICE_TYPE] || 'automotive'
+  )
+
+  const [defaultTechnicianId, setDefaultTechnicianId] = useState(
+    settings[SETTING_KEYS.DEFAULT_TECHNICIAN_ID] || ''
+  )
+  const [technicians, setTechnicians] = useState<TechnicianOption[]>(initialTechnicians)
+  const [techOpen, setTechOpen] = useState(false)
+  const [techSearch, setTechSearch] = useState('')
+  const [creatingTech, setCreatingTech] = useState(false)
+  const [showNewInput, setShowNewInput] = useState(false)
+  const [newTechName, setNewTechName] = useState('')
+  const [showAssignDialog, setShowAssignDialog] = useState(false)
+  const [pendingTechId, setPendingTechId] = useState<string | null>(null)
+  const [assigning, setAssigning] = useState(false)
+  const [defaultLaborRate, setDefaultLaborRate] = useState(
+    settings[SETTING_KEYS.DEFAULT_LABOR_RATE] || ''
+  )
+  const [unitSystem, setUnitSystem] = useState(settings[SETTING_KEYS.UNIT_SYSTEM] || 'imperial')
+  const [defaultUnit, setDefaultUnit] = useState(
+    settings[SETTING_KEYS.INVENTORY_DEFAULT_UNIT] || ''
+  )
+  const [workDayStart, setWorkDayStart] = useState(
+    settings[SETTING_KEYS.WORKBOARD_WORK_DAY_START] || '07:00'
+  )
+  const [workDayEnd, setWorkDayEnd] = useState(
+    settings[SETTING_KEYS.WORKBOARD_WORK_DAY_END] || '15:00'
+  )
+
+  const selectedTechName = technicians.find((t) => t.id === defaultTechnicianId)?.name || ''
+
+  const handleTechSelect = (techId: string) => {
+    setDefaultTechnicianId(techId)
+    setTechOpen(false)
+    if (techId) {
+      setPendingTechId(techId)
+      setShowAssignDialog(true)
+    }
+  }
+
+  const handleAssignUnassigned = async () => {
+    if (!pendingTechId) return
+    setAssigning(true)
+    const result = await assignTechToUnassignedWorkOrders(pendingTechId)
+    setAssigning(false)
+    setShowAssignDialog(false)
+    setPendingTechId(null)
+    if (result.success && result.data) {
+      toast.success(t('workshop.assignedUnassigned', { count: result.data.updated }))
+    } else {
+      toast.error(result.error || t('workshop.assignFailed'))
+    }
+  }
+
+  const doCreateTechnician = async (name: string) => {
+    if (!name.trim()) return
+    setCreatingTech(true)
+    const res = await createTechnician({ name: name.trim() })
+    setCreatingTech(false)
+    if (res.success && res.data) {
+      const newTech = { id: res.data.id, name: res.data.name }
+      setTechnicians((prev) => [...prev, newTech])
+      setTechSearch('')
+      setNewTechName('')
+      setShowNewInput(false)
+      handleTechSelect(newTech.id)
+    } else {
+      toast.error(t('workshop.failedCreateTech'))
+    }
+  }
+
+  const searchLower = techSearch.toLowerCase()
+  const exactMatch = technicians.some((tech) => tech.name.toLowerCase() === searchLower)
+
+  const handleSave = async () => {
+    setSaving(true)
+    await setSettings({
+      [SETTING_KEYS.SERVICE_TYPE]: serviceType,
+      [SETTING_KEYS.DEFAULT_TECHNICIAN_ID]: defaultTechnicianId,
+      [SETTING_KEYS.DEFAULT_TECHNICIAN]: selectedTechName,
+      [SETTING_KEYS.DEFAULT_LABOR_RATE]: defaultLaborRate,
+      [SETTING_KEYS.UNIT_SYSTEM]: unitSystem,
+      [SETTING_KEYS.INVENTORY_DEFAULT_UNIT]: defaultUnit.trim(),
+      [SETTING_KEYS.WORKBOARD_WORK_DAY_START]: workDayStart,
+      [SETTING_KEYS.WORKBOARD_WORK_DAY_END]: workDayEnd,
+    })
+    setSaving(false)
+    router.refresh()
+    toast.success(t('workshop.saved'))
+  }
+
+  return (
+    <div className="space-y-6">
+      <ReadOnlyBanner />
+      <ReadOnlyWrapper>
+        <ServiceTypeSelector serviceType={serviceType} onServiceTypeChange={setServiceType} />
+        <AppCard icon={Wrench} title={t('workshop.title')} contentClassName="space-y-6">
+          <p className="text-sm text-muted-foreground">{t('workshop.description')}</p>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label>{t('workshop.defaultTechnician')}</Label>
+              <Popover open={techOpen} onOpenChange={setTechOpen} modal={true}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={techOpen}
+                    className="w-full justify-between font-normal"
+                  >
+                    <span className="truncate">
+                      {selectedTechName || t('workshop.technicianPlaceholder')}
+                    </span>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                  <Command shouldFilter={true}>
+                    <CommandInput
+                      placeholder={t('workshop.technicianPlaceholder')}
+                      value={techSearch}
+                      onValueChange={setTechSearch}
+                    />
+                    <CommandList className="max-h-60 overflow-y-auto">
+                      <CommandEmpty className="p-0" />
+                      <CommandGroup>
+                        <CommandItem
+                          value="__none__"
+                          onSelect={() => {
+                            setDefaultTechnicianId('')
+                            setTechOpen(false)
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              'mr-2 h-4 w-4',
+                              !defaultTechnicianId ? 'opacity-100' : 'opacity-0'
+                            )}
+                          />
+                          <span className="text-muted-foreground">
+                            {t('workshop.noTechnician')}
+                          </span>
+                        </CommandItem>
+                        {technicians.map((tech) => (
+                          <CommandItem
+                            key={tech.id}
+                            value={tech.name}
+                            onSelect={() => handleTechSelect(tech.id)}
+                          >
+                            <Check
+                              className={cn(
+                                'mr-2 h-4 w-4',
+                                defaultTechnicianId === tech.id ? 'opacity-100' : 'opacity-0'
+                              )}
+                            />
+                            {tech.name}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                      {techSearch.trim() && !exactMatch && (
+                        <CommandGroup>
+                          <CommandItem
+                            value={`__create__${techSearch}`}
+                            onSelect={() => doCreateTechnician(techSearch)}
+                            disabled={creatingTech}
+                          >
+                            <Plus className="mr-2 h-4 w-4" />
+                            {creatingTech
+                              ? t('workshop.creating')
+                              : t('workshop.createTechnician', { name: techSearch.trim() })}
+                          </CommandItem>
+                        </CommandGroup>
+                      )}
+                      <CommandSeparator />
+                      <CommandGroup>
+                        {showNewInput ? (
+                          <div
+                            className="flex items-center gap-1.5 px-2 py-1.5"
+                            onKeyDown={(e) => e.stopPropagation()}
+                          >
+                            <Input
+                              autoFocus
+                              placeholder={t('workshop.newTechPlaceholder')}
+                              value={newTechName}
+                              onChange={(e) => setNewTechName(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault()
+                                  doCreateTechnician(newTechName)
+                                }
+                                if (e.key === 'Escape') {
+                                  setShowNewInput(false)
+                                  setNewTechName('')
+                                }
+                              }}
+                              className="h-7 text-sm"
+                              disabled={creatingTech}
+                            />
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 px-2 shrink-0"
+                              disabled={creatingTech || !newTechName.trim()}
+                              onClick={() => doCreateTechnician(newTechName)}
+                            >
+                              {creatingTech ? t('workshop.creating') : t('workshop.addTech')}
+                            </Button>
+                          </div>
+                        ) : (
+                          <CommandItem value="__add_new__" onSelect={() => setShowNewInput(true)}>
+                            <Plus className="mr-2 h-4 w-4" />
+                            {t('workshop.addNewTech')}
+                          </CommandItem>
+                        )}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="defaultLaborRate">{t('workshop.defaultLaborRate')}</Label>
+              <Input
+                id="defaultLaborRate"
+                type="number"
+                placeholder={t('workshop.laborRatePlaceholder')}
+                value={defaultLaborRate}
+                onChange={(e) => setDefaultLaborRate(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="workDayStart">{t('workshop.workDayStart')}</Label>
+              <Input
+                id="workDayStart"
+                type="time"
+                value={workDayStart}
+                onChange={(e) => setWorkDayStart(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="workDayEnd">{t('workshop.workDayEnd')}</Label>
+              <Input
+                id="workDayEnd"
+                type="time"
+                value={workDayEnd}
+                onChange={(e) => setWorkDayEnd(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <Separator />
+
+          <div className="space-y-4">
+            <div className="flex flex-row items-center gap-3">
+              <Ruler className="h-5 w-5 text-muted-foreground" />
+              <h3 className="text-lg font-semibold">{t('workshop.unitsTitle')}</h3>
+            </div>
+            <p className="text-sm text-muted-foreground">{t('workshop.unitsDescription')}</p>
+
+            <div className="space-y-2">
+              <Label htmlFor="unitSystem">{t('workshop.unitSystem')}</Label>
+              <Select value={unitSystem} onValueChange={setUnitSystem}>
+                <SelectTrigger className="w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="metric">{t('workshop.metric')}</SelectItem>
+                  <SelectItem value="imperial">{t('workshop.imperial')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="rounded-lg border p-3 text-sm text-muted-foreground">
+              {unitSystem === 'metric' ? (
+                <div className="space-y-1">
+                  <p>
+                    {t('workshop.distanceLabel')}:{' '}
+                    <span className="font-medium text-foreground">{t('workshop.kilometers')}</span>
+                  </p>
+                  <p>
+                    {t('workshop.volumeLabel')}:{' '}
+                    <span className="font-medium text-foreground">{t('workshop.liters')}</span>
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  <p>
+                    {t('workshop.distanceLabel')}:{' '}
+                    <span className="font-medium text-foreground">{t('workshop.miles')}</span>
+                  </p>
+                  <p>
+                    {t('workshop.volumeLabel')}:{' '}
+                    <span className="font-medium text-foreground">{t('workshop.gallons')}</span>
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="defaultUnit">{t('workshop.defaultStockUnit')}</Label>
+              {/* Suggestions follow the (unsaved) system picked above, so
+                  switching to imperial immediately offers qt/gal/lb. */}
+              <UnitCombobox
+                id="defaultUnit"
+                className="w-48"
+                value={defaultUnit}
+                onChange={setDefaultUnit}
+                unitSystem={unitSystem}
+              />
+              <p className="text-sm text-muted-foreground">{t('workshop.defaultStockUnitHint')}</p>
+            </div>
+          </div>
+
+          <SaveButton>
+            <Separator />
+            <div className="flex items-center gap-3">
+              <Button onClick={handleSave} disabled={saving}>
+                {saving ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="mr-2 h-4 w-4" />
+                )}
+                {t('workshop.saveWorkshop')}
+              </Button>
+            </div>
+          </SaveButton>
+        </AppCard>
+      </ReadOnlyWrapper>
+
+      <AlertDialog
+        open={showAssignDialog}
+        onOpenChange={(open) => {
+          if (!open) setPendingTechId(null)
+          setShowAssignDialog(open)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('workshop.assignDialogTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('workshop.assignDialogDescription', {
+                name: technicians.find((tech) => tech.id === pendingTechId)?.name || '',
+              })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('workshop.assignDialogSkip')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleAssignUnassigned} disabled={assigning}>
+              {assigning && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {t('workshop.assignDialogConfirm')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  )
+}

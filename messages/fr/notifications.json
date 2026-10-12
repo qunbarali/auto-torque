@@ -1,0 +1,11 @@
+{
+  "panel": {
+    "title": "Notifications",
+    "markAllRead": "Tout marquer comme lu",
+    "empty": "Aucune notification pour le moment",
+    "confirmDelete": "Êtes-vous sûr ?",
+    "delete": "Supprimer",
+    "cancel": "Annuler"
+  },
+  "openNotifications": "Open notifications"
+}

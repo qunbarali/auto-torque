@@ -1,0 +1,11 @@
+{
+  "panel": {
+    "title": "Varsler",
+    "markAllRead": "Merk alle som lest",
+    "empty": "Ingen varsler ennå",
+    "confirmDelete": "Er du sikker?",
+    "delete": "Slett",
+    "cancel": "Avbryt"
+  },
+  "openNotifications": "Open notifications"
+}

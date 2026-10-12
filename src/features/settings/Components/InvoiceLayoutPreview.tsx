@@ -1,0 +1,72 @@
+'use client'
+
+import dynamic from 'next/dynamic'
+import type { InvoiceLayoutConfig } from '../Schema/invoiceLayoutSchema'
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+interface FieldDef {
+  id: string
+  name: string
+  label: string
+  fieldType: string
+  entityType: string
+  options: string | null
+  required: boolean
+  sortOrder: number
+  isActive: boolean
+}
+
+interface TemplateValues {
+  primaryColor: string
+  /** Sheet color behind the document. Empty leaves the paper white. */
+  backgroundColor?: string
+  /** Body and heading color. Empty leaves the near-black default. */
+  textColor?: string
+  /** The company name on the letterhead. Empty leaves the style's default. */
+  companyTextColor?: string
+  /** Line where the sheet meets a framed letterhead. Empty means no line. */
+  frameBorderColor?: string
+  /** "false" prints the frame flat against the sheet. */
+  frameShadow?: string
+  frameRadius?: string | number
+  /** Which edge the framed rail runs down. */
+  frameSide?: string
+  fontFamily: string
+  headerStyle: string
+  logoSize?: number
+}
+
+export interface InvoiceLayoutPreviewProps {
+  config: InvoiceLayoutConfig
+  documentType: 'invoice' | 'quote'
+  customFields?: FieldDef[]
+  template: TemplateValues
+  logoUrl?: string
+  /**
+   * The workshop's own details. Whatever is missing falls back to the sample
+   * shop, so a workshop that has filled in Company details sees its own
+   * letterhead rather than "Your Workshop".
+   */
+  workshop?: { name?: string; address?: string; phone?: string; email?: string; slogan?: string }
+}
+
+// The actual renderer must be in a separate file loaded only client-side
+// because @react-pdf/renderer primitives fail during SSR.
+const PreviewRenderer = dynamic(
+  () => import('./InvoiceLayoutPreviewRenderer').then((mod) => mod.InvoiceLayoutPreviewRenderer),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-230 items-center justify-center rounded-lg border bg-gray-100 text-sm text-muted-foreground">
+        Loading preview…
+      </div>
+    ),
+  }
+)
+
+export function InvoiceLayoutPreview(props: InvoiceLayoutPreviewProps) {
+  return <PreviewRenderer {...props} />
+}

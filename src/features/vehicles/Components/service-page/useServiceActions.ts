@@ -1,0 +1,349 @@
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+import { useGlassModal } from '@/components/glass-modal'
+import { useConfirm } from '@/components/confirm-dialog'
+import { useTranslations } from 'next-intl'
+import {
+  updateServiceRecord,
+  deleteServiceRecord,
+  deleteServiceAttachment,
+  toggleManuallyPaid,
+} from '@/features/vehicles/Actions/serviceActions'
+import { createPayment, deletePayment } from '@/features/payments/Actions/paymentActions'
+import { getSmsTemplates } from '@/features/sms/Actions/smsActions'
+import { SETTING_KEYS } from '@/features/settings/Schema/settingsSchema'
+import { SMS_TEMPLATE_DEFAULTS, interpolateSmsTemplate } from '@/lib/sms-templates'
+import { formatCurrency } from '@/lib/format'
+import type { ServiceDetail } from '../service-detail/types'
+import type { useServiceFormState } from './useServiceFormState'
+
+type FormState = ReturnType<typeof useServiceFormState>
+
+export function useServiceActions({
+  record,
+  vehicleId,
+  currencyCode,
+  formState,
+}: {
+  record: ServiceDetail
+  vehicleId: string | null
+  currencyCode: string
+  formState: FormState
+}) {
+  const router = useRouter()
+  const modal = useGlassModal()
+  const confirm = useConfirm()
+  const t = useTranslations('service')
+  const tc = useTranslations('common')
+
+  const [carouselIndex, setCarouselIndex] = useState<number | null>(null)
+  const [downloading, setDownloading] = useState(false)
+  const [deletingAttachment, setDeletingAttachment] = useState<string | null>(null)
+  const [paymentLoading, setPaymentLoading] = useState(false)
+  const [deletingPayment, setDeletingPayment] = useState<string | null>(null)
+  const [showShareDialog, setShowShareDialog] = useState(false)
+  const [showEmailDialog, setShowEmailDialog] = useState(false)
+  const [showPaymentNotifyDialog, setShowPaymentNotifyDialog] = useState(false)
+  const [paymentNotifyMessage, setPaymentNotifyMessage] = useState('')
+
+  const {
+    selectedVehicleId,
+    type,
+    status,
+    concerns,
+    partItems,
+    laborItems,
+    subtotal,
+    taxRate,
+    taxInclusive,
+    taxAmount,
+    totalAmount,
+    discountType,
+    discountValue,
+    discountAmount,
+    warrantyMonths,
+    warrantyMileage,
+    warrantyNotes,
+    isSavingRef,
+    autosaveTimer,
+    setLoading,
+    setHasUnsavedChanges,
+    flashSaved,
+    notesRef,
+    initialData,
+    customFieldsSaveRef,
+  } = formState
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const form = e.currentTarget
+    if (isSavingRef.current) return
+    if (autosaveTimer.current) clearTimeout(autosaveTimer.current)
+
+    // Validate and save custom fields before saving
+    if (customFieldsSaveRef.current) {
+      try {
+        const { valid } = await customFieldsSaveRef.current()
+        if (!valid) {
+          toast.error(t('page.customFieldsInvalid'))
+          return
+        }
+      } catch (err) {
+        console.error('Custom fields save error:', err)
+        toast.error(t('page.customFieldsSaveFailed'))
+        return
+      }
+    }
+
+    isSavingRef.current = true
+    setLoading(true)
+
+    // Mobile + desktop layouts both render inputs with the same name.
+    // formData.get() returns the first (hidden/stale) one, so read the visible input via offsetParent.
+    // For hidden inputs (offsetParent is always null), take the last one in DOM order.
+    const getVisible = (name: string) => {
+      // Textareas too. This read only ever looked at inputs, so a multi-line
+      // field would have submitted nothing at all and done it quietly.
+      const inputs = Array.from(
+        form.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>(
+          `input[name="${name}"], textarea[name="${name}"]`
+        )
+      )
+      const visible = inputs.find((el) => el.offsetParent !== null)
+      if (visible) return visible.value
+      // All hidden — take last (active layout renders second)
+      const last = inputs[inputs.length - 1]
+      return last?.value ?? (new FormData(form).get(name) as string)
+    }
+    const rawMileage = getVisible('mileage')
+    const parsedMileage = rawMileage ? Number(rawMileage) || undefined : undefined
+
+    const payload = {
+      id: initialData.id,
+      vehicleId: selectedVehicleId,
+      title: getVisible('title'),
+      description: notesRef.current.description || undefined,
+      // What the customer said at drop-off. Typed at intake beside the vehicle,
+      // not in the notes section, so it is read from the form rather than from
+      // the notes state.
+      type,
+      status,
+      cost: totalAmount,
+      mileage: parsedMileage,
+      serviceDate: getVisible('serviceDate') || new Date().toISOString(),
+      // techName intentionally omitted: it has no UI in the form (read-only),
+      // and the Schedule card writes it directly via assignTechnician. Sending
+      // the form-state value here would clobber a tech change made via the
+      // Schedule card with a stale name from initial load.
+      diagnosticNotes: notesRef.current.diagnosticNotes || undefined,
+      invoiceNotes: notesRef.current.invoiceNotes || undefined,
+      invoiceNumber: getVisible('invoiceNumber') || undefined,
+      invoiceDate: getVisible('invoiceDate') || undefined,
+      invoiceDueDate: getVisible('invoiceDueDate') || undefined,
+      // Blank rows are somebody halfway through typing, not a concern.
+      concerns: concerns
+        .filter((c) => c.description.trim())
+        .map((c, index) => ({ ...c, description: c.description.trim(), sortOrder: index })),
+      partItems: partItems.filter((p) => p.name),
+      laborItems: laborItems.filter((l) => l.description),
+      subtotal,
+      taxRate,
+      taxInclusive,
+      taxAmount,
+      totalAmount,
+      discountType: discountType === 'none' ? 'none' : discountType,
+      discountValue: discountType === 'none' ? 0 : discountValue,
+      discountAmount: discountType === 'none' ? 0 : discountAmount,
+      warrantyMonths: warrantyMonths ?? 0,
+      warrantyMileage: warrantyMileage ?? 0,
+      warrantyNotes: warrantyNotes ?? '',
+    }
+
+    const result = await updateServiceRecord(payload)
+
+    if (result.success) {
+      setHasUnsavedChanges(false)
+      flashSaved()
+      if (selectedVehicleId && selectedVehicleId !== vehicleId) {
+        router.push(`/vehicles/${selectedVehicleId}/service/${initialData.id}`)
+      } else {
+        router.refresh()
+      }
+    } else {
+      modal.open('error', tc('errors.error'), result.error || t('page.failedUpdate'))
+    }
+
+    isSavingRef.current = false
+    setLoading(false)
+  }
+
+  const handleDelete = async () => {
+    const ok = await confirm({
+      title: t('page.deleteTitle'),
+      description: t('page.deleteDescription'),
+      confirmLabel: tc('buttons.delete'),
+      destructive: true,
+    })
+    if (!ok) return
+    // A pending autosave firing after the delete would hit a record that no
+    // longer exists, so cancel it and block further saves before deleting.
+    if (autosaveTimer.current) clearTimeout(autosaveTimer.current)
+    isSavingRef.current = true
+    const result = await deleteServiceRecord(record.id)
+    if (result.success) {
+      setHasUnsavedChanges(false)
+      router.push(vehicleId ? `/vehicles/${vehicleId}` : '/work-orders')
+      router.refresh()
+    } else {
+      isSavingRef.current = false
+      modal.open('error', tc('errors.error'), result.error || t('page.failedDelete'))
+    }
+  }
+
+  const handleDownloadPDF = async () => {
+    setDownloading(true)
+    try {
+      const res = await fetch(`/api/protected/services/${record.id}/pdf`)
+      if (!res.ok) throw new Error('Failed')
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download =
+        res.headers.get('Content-Disposition')?.match(/filename="(.+)"/)?.[1] ||
+        `invoice-${record.invoiceNumber || record.id}.pdf`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      modal.open('error', tc('errors.error'), t('payments.failedPdf'))
+    }
+    setDownloading(false)
+  }
+
+  const handleDeleteAttachment = async (id: string) => {
+    const ok = await confirm({
+      title: t('attachments.deleteTitle'),
+      description: t('attachments.deleteDescription'),
+      confirmLabel: tc('buttons.delete'),
+      destructive: true,
+    })
+    if (!ok) return
+    setDeletingAttachment(id)
+    const result = await deleteServiceAttachment(id)
+    if (result.success) {
+      toast.success(t('attachments.deleted'))
+      router.refresh()
+    } else {
+      modal.open('error', tc('errors.error'), result.error || t('attachments.failedDelete'))
+    }
+    setDeletingAttachment(null)
+  }
+
+  const buildPaymentNotifyMessage = async (amount: string) => {
+    const invoiceNum = record.invoiceNumber || `#${record.id.slice(-8).toUpperCase()}`
+    const tplResult = await getSmsTemplates()
+    const tplData = tplResult.success && tplResult.data ? tplResult.data : null
+    const tpl =
+      tplData?.templates[SETTING_KEYS.SMS_TEMPLATE_PAYMENT_RECEIVED] ||
+      SMS_TEMPLATE_DEFAULTS[SETTING_KEYS.SMS_TEMPLATE_PAYMENT_RECEIVED] ||
+      ''
+    setPaymentNotifyMessage(
+      interpolateSmsTemplate(tpl, {
+        amount,
+        invoice_number: invoiceNum,
+        customer_name: (record.customer ?? record.vehicle?.customer)?.name || '',
+        company_name: tplData?.companyName || '',
+        current_user: tplData?.currentUser || '',
+      })
+    )
+    setShowPaymentNotifyDialog(true)
+  }
+
+  const handleCreatePayment = async (data: {
+    amount: number
+    date: string
+    method: string
+    note?: string
+  }) => {
+    setPaymentLoading(true)
+    const result = await createPayment({ serviceRecordId: record.id, ...data })
+    setPaymentLoading(false)
+    if (result.success) {
+      toast.success(t('payments.recorded'))
+      router.refresh()
+      if (record.customer ?? record.vehicle?.customer) {
+        await buildPaymentNotifyMessage(formatCurrency(data.amount, currencyCode))
+      }
+      return true
+    }
+    modal.open('error', tc('errors.error'), result.error || t('payments.failedRecord'))
+    return false
+  }
+
+  const handleTogglePaid = async () => {
+    setPaymentLoading(true)
+    const result = await toggleManuallyPaid(record.id)
+    setPaymentLoading(false)
+    if (result.success) {
+      formState.setLocalManuallyPaid(!!result.data?.manuallyPaid)
+      toast.success(
+        result.data?.manuallyPaid ? t('payments.markedPaid') : t('payments.markedUnpaid')
+      )
+      router.refresh()
+      if (result.data?.manuallyPaid && (record.customer ?? record.vehicle?.customer)) {
+        await buildPaymentNotifyMessage('')
+      }
+    } else {
+      modal.open('error', tc('errors.error'), result.error || t('payments.failedStatus'))
+    }
+  }
+
+  const handleDeletePayment = async (id: string) => {
+    const ok = await confirm({
+      title: t('payments.deleteTitle'),
+      description: t('payments.deleteDescription'),
+      confirmLabel: tc('buttons.delete'),
+      destructive: true,
+    })
+    if (!ok) return
+    setDeletingPayment(id)
+    const result = await deletePayment(id)
+    if (result.success) {
+      toast.success(t('payments.deleted'))
+      router.refresh()
+    } else {
+      modal.open('error', tc('errors.error'), result.error || t('payments.failedDelete'))
+    }
+    setDeletingPayment(null)
+  }
+
+  return {
+    // Action handlers
+    handleSubmit,
+    handleDelete,
+    handleDownloadPDF,
+    handleDeleteAttachment,
+    handleCreatePayment,
+    handleTogglePaid,
+    handleDeletePayment,
+    // Dialog/UI state
+    downloading,
+    deletingAttachment,
+    paymentLoading,
+    deletingPayment,
+    showShareDialog,
+    setShowShareDialog,
+    showEmailDialog,
+    setShowEmailDialog,
+    showPaymentNotifyDialog,
+    setShowPaymentNotifyDialog,
+    paymentNotifyMessage,
+    // Carousel
+    carouselIndex,
+    setCarouselIndex,
+    onImageClick: setCarouselIndex,
+    // Helpers
+    saveNow: formState.saveNow,
+  }
+}

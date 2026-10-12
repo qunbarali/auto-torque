@@ -1,0 +1,106 @@
+name: "[Prod] Rollback"
+
+# Rolls production back to an earlier image, and optionally restores the
+# database from a dump taken by the deploy workflow.
+#
+# Rolling the image back is the normal case and loses nothing. Restoring the
+# database is a last resort for when the new schema is incompatible with the
+# old code: it discards EVERYTHING CUSTOMERS WROTE since the dump was taken.
+# That is why a database restore additionally requires typing
+# "restore-production" into the confirm field.
+#
+# Reuses the compose file and .env that "Deploy: app.auto-torque.com" wrote, so
+# prod must have been deployed at least once before this can run.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Version tag to roll back to (e.g. v1.2.38). 'latest' is refused."
+        required: true
+      restore_database:
+        description: "DESTRUCTIVE. Also restore the database, discarding everything written since the dump. Leave off unless the old code cannot run against the new schema."
+        type: boolean
+        default: false
+      dump:
+        description: "Dump filename to restore from (e.g. auto-torque-20260815-120000-pre-v1.2.39.dump). Only used when restore_database is on."
+        required: false
+        default: ""
+      confirm:
+        description: "Type restore-production to allow a database restore. Ignored otherwise."
+        required: false
+        default: ""
+
+jobs:
+  rollback:
+    runs-on: [self-hosted, Linux, X64, hetzner]
+
+    steps:
+      - name: Refuse floating tags
+        run: |
+          if [ "${{ inputs.tag }}" = "latest" ] || [ -z "${{ inputs.tag }}" ]; then
+            echo "::error::Roll back to a version tag (e.g. v1.2.38), never 'latest'."
+            exit 1
+          fi
+
+      - name: Show available dumps
+        run: ls -lht "${{ secrets.DATA_PATH }}/db-backups/auto-torque" 2>/dev/null | head -20 || echo "No dumps yet."
+
+      # Everything that can fail is checked before the app is stopped, so a bad
+      # input leaves production untouched and still running.
+      - name: Validate restore request
+        if: inputs.restore_database
+        run: |
+          set -euo pipefail
+          if [ "${{ inputs.confirm }}" != "restore-production" ]; then
+            echo "::error::Database restore requested without typing restore-production in the confirm field."
+            exit 1
+          fi
+          if [ -z "${{ inputs.dump }}" ]; then
+            echo "::error::restore_database is on but no dump filename was given."
+            exit 1
+          fi
+          case "${{ inputs.dump }}" in
+            auto-torque-*.sqlite) ;;
+            *) echo "::error::Invalid SQLite backup filename."; exit 1 ;;
+          esac
+          DUMP="${{ secrets.DATA_PATH }}/db-backups/auto_torque/${{ inputs.dump }}"
+          test -s "$DUMP" || { echo "::error::SQLite backup not found: $DUMP"; exit 1; }
+          echo "SQLite backup is present: $DUMP"
+
+      - name: Stop prod app
+        run: |
+          cd $HOME/auto-torque-deploy/prod
+          docker compose stop auto-torque-app
+
+      - name: Restore SQLite database
+        if: inputs.restore_database
+        run: |
+          set -euo pipefail
+          DATA_DIR="${{ secrets.DATA_PATH }}/auto_torque_data"
+          DUMP="${{ secrets.DATA_PATH }}/db-backups/auto_torque/${{ inputs.dump }}"
+          cd "$DATA_DIR"
+          cp "$DUMP" auto_torque.sqlite
+          rm -f auto_torque.sqlite-wal auto_torque.sqlite-shm
+          echo "SQLite restore complete."
+
+      - name: Deploy previous tag
+        run: |
+          cd $HOME/auto-torque-deploy/prod
+          APP_TAG=${{ inputs.tag }} docker compose up -d --pull always
+
+      - name: Health check
+        run: |
+          echo "Waiting for prod container to be ready..."
+          for i in $(seq 1 12); do
+            STATUS=$(docker inspect --format='{{.State.Status}}' auto-torque-app 2>/dev/null || echo "not found")
+            if [ "$STATUS" = "running" ]; then
+              echo "Rolled back to ${{ inputs.tag }}."
+              exit 0
+            fi
+            echo "Status: $STATUS, retrying in 5s..."
+            sleep 5
+          done
+          echo "::error::Container failed to start after rollback"
+          docker logs auto-torque-app --tail 50
+          exit 1

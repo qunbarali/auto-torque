@@ -1,0 +1,25 @@
+services:
+  app:
+    container_name: auto-torque-dev
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    volumes:
+      - ..:/workspace:cached
+      - auto-torque-dev-data:/workspace/data
+    env_file:
+      - ../.env
+    environment:
+      DATABASE_URL: file:/workspace/data/auto_torque.sqlite
+    command: sleep infinity
+    ports:
+      - "3000:3000"
+    networks:
+      - auto-torque-shared
+
+volumes:
+  auto-torque-dev-data:
+
+networks:
+  auto-torque-shared:
+    driver: bridge

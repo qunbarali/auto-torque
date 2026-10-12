@@ -1,0 +1,82 @@
+{
+  "weekdays": {
+    "sun": "Søn",
+    "mon": "Man",
+    "tue": "Tir",
+    "wed": "Ons",
+    "thu": "Tor",
+    "fri": "Fre",
+    "sat": "Lør"
+  },
+  "months": {
+    "january": "Januar",
+    "february": "Februar",
+    "march": "Mars",
+    "april": "April",
+    "may": "Mai",
+    "june": "Juni",
+    "july": "Juli",
+    "august": "August",
+    "september": "September",
+    "october": "Oktober",
+    "november": "November",
+    "december": "Desember"
+  },
+  "stats": {
+    "services": "Tjenester",
+    "overdue": "Forfalt",
+    "pendingQuotes": "Ventende tilbud",
+    "revenue": "Inntekt"
+  },
+  "today": "I dag",
+  "workOrder": "Arbeidsordre",
+  "filters": {
+    "services": "Tjenester",
+    "reminders": "Påminnelser",
+    "quotes": "Tilbud",
+    "messages": "Meldinger"
+  },
+  "selectVehicle": "Velg kjøretøy for arbeidsordre",
+  "dateChoice": {
+    "title": "Work Order Date",
+    "description": "You have {selectedDate} selected. Which date should this work order be for?",
+    "useSelected": "Use {date}",
+    "useToday": "Use today"
+  },
+  "more": "+ {count} flere",
+  "monthTotal": "{count} hendelser denne måneden",
+  "contextMenu": {
+    "newWorkOrder": "Ny arbeidsordre",
+    "newReminder": "Ny påminnelse",
+    "newQuote": "Nytt tilbud",
+    "openEvent": "Åpne ({count})",
+    "hint": "Tips: høyreklikk en dag for handlinger",
+    "scheduleMessage": "Planlegg melding"
+  },
+  "events": {
+    "status": {
+      "completed": "Fullført",
+      "inProgress": "Pågår",
+      "waitingParts": "Venter på deler",
+      "pending": "Ventende",
+      "sent": "Sendt",
+      "approved": "Godkjent",
+      "draft": "Utkast",
+      "done": "Ferdig",
+      "overdue": "Forfalt",
+      "upcoming": "Kommende",
+      "failed": "Mislyktes",
+      "queued": "I kø"
+    },
+    "type": {
+      "service": "Tjeneste",
+      "reminder": "Påminnelse",
+      "quote": "Tilbud",
+      "message": "Melding"
+    },
+    "noEvents": "Ingen hendelser",
+    "selectDay": "Velg en dag med hendelser eller opprett en ny arbeidsordre."
+  },
+  "previousMonth": "Previous month",
+  "nextMonth": "Next month"
+}

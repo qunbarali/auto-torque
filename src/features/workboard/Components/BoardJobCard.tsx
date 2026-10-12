@@ -1,0 +1,155 @@
+'use client'
+
+import { interactiveRow } from '@/lib/interactive-row'
+import { useDraggable } from '@dnd-kit/core'
+import { CSS } from '@dnd-kit/utilities'
+import { Clock, GripVertical, Wrench, ClipboardCheck } from 'lucide-react'
+import type { WorkBoardJob } from '../Actions/boardActions'
+import { getJobDateRange, getDurationMinutes } from '../utils/datetime'
+import { formatDuration } from './DurationSlider'
+
+export function BoardJobCard({ job, onClick }: { job: WorkBoardJob; onClick?: () => void }) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: job.id,
+    data: { job },
+  })
+
+  const style = transform
+    ? {
+        transform: CSS.Translate.toString(transform),
+        zIndex: isDragging ? 50 : undefined,
+        opacity: isDragging ? 0.5 : undefined,
+      }
+    : undefined
+
+  const isServiceRecord = job.type === 'serviceRecord'
+
+  const { start, end } = getJobDateRange(job)
+  const durationMins = start && end ? getDurationMinutes(start, end) : null
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="group flex cursor-pointer items-start gap-1 rounded-md border bg-card p-1.5 text-xs shadow-sm transition-shadow hover:shadow-md"
+      {...(onClick ? interactiveRow(onClick) : {})}
+    >
+      <button
+        {...listeners}
+        {...attributes}
+        className="mt-0.5 shrink-0 cursor-grab touch-none text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 active:cursor-grabbing"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <GripVertical className="h-3 w-3" />
+      </button>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-1">
+          {isServiceRecord ? (
+            <Wrench className="h-3 w-3 shrink-0 text-blue-500" />
+          ) : (
+            <ClipboardCheck className="h-3 w-3 shrink-0 text-green-500" />
+          )}
+          <span className="truncate font-medium">{job.title}</span>
+        </div>
+        {job.vehicle && (
+          <p className="truncate text-muted-foreground">
+            {job.vehicle.year} {job.vehicle.make} {job.vehicle.model}
+            {job.vehicle.licensePlate ? ` · ${job.vehicle.licensePlate}` : ''}
+          </p>
+        )}
+        <div className="flex items-center gap-1.5">
+          {job.status && (
+            <span className="inline-block rounded bg-muted px-1 py-0.5 text-[10px] capitalize">
+              {job.status.replace(/_/g, ' ')}
+            </span>
+          )}
+          {durationMins != null && durationMins > 0 && (
+            <span className="inline-flex items-center gap-0.5 rounded bg-blue-500/10 px-1 py-0.5 text-[10px] text-blue-600 dark:text-blue-400">
+              <Clock className="h-2.5 w-2.5" />
+              {formatDuration(durationMins)}
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function UnassignedJobCard({
+  job,
+  type,
+}: {
+  job:
+    | {
+        id: string
+        title: string
+        status: string
+        vehicle: {
+          id: string
+          make: string
+          model: string
+          year: number
+          licensePlate: string | null
+        } | null
+      }
+    | {
+        id: string
+        status: string
+        vehicle: {
+          id: string
+          make: string
+          model: string
+          year: number
+          licensePlate: string | null
+        }
+        template: { name: string }
+      }
+  type: 'serviceRecord' | 'inspection'
+}) {
+  const dragId = type === 'serviceRecord' ? `unassigned-sr-${job.id}` : `unassigned-insp-${job.id}`
+
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: dragId,
+    data: { job, type },
+  })
+
+  const style = transform
+    ? {
+        transform: CSS.Translate.toString(transform),
+        zIndex: isDragging ? 50 : undefined,
+        opacity: isDragging ? 0.5 : undefined,
+      }
+    : undefined
+
+  const isServiceRecord = type === 'serviceRecord'
+  const title = isServiceRecord
+    ? (job as { title: string }).title
+    : (job as { template: { name: string } }).template.name
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
+      className="flex cursor-grab items-start gap-1 rounded-md border bg-card p-1.5 text-xs shadow-sm touch-none active:cursor-grabbing"
+    >
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-1">
+          {isServiceRecord ? (
+            <Wrench className="h-3 w-3 shrink-0 text-blue-500" />
+          ) : (
+            <ClipboardCheck className="h-3 w-3 shrink-0 text-green-500" />
+          )}
+          <span className="truncate font-medium">{title}</span>
+        </div>
+        {job.vehicle && (
+          <p className="truncate text-muted-foreground">
+            {job.vehicle.year} {job.vehicle.make} {job.vehicle.model}
+            {job.vehicle.licensePlate ? ` · ${job.vehicle.licensePlate}` : ''}
+          </p>
+        )}
+      </div>
+    </div>
+  )
+}

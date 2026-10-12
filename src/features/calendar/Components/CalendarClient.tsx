@@ -1,0 +1,477 @@
+'use client'
+
+import { useState, useCallback, useMemo } from 'react'
+import { useTranslations } from 'next-intl'
+import { useDateSettings } from '@/components/date-settings-context'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
+import { ChevronLeft, ChevronRight, Loader2, Plus, MousePointerClick } from 'lucide-react'
+import { CalendarDayCell } from './CalendarDayCell'
+import { CalendarEventList } from './CalendarEventList'
+import { ReminderFormDialog } from '@/features/vehicles/Components/ReminderFormDialog'
+import { NewQuoteDialog } from '@/features/quotes/Components/NewQuoteDialog'
+import { ScheduleMessageDialog } from '@/features/scheduled-messages/Components/ScheduleMessageDialog'
+import type { MessageChannel } from '@/features/scheduled-messages/Schema/scheduledMessageSchema'
+import { toLocalDateStr } from './calendar-utils'
+import { getCalendarEvents } from '../Actions/calendarActions'
+import type { CalendarEvent } from '../Actions/calendarActions'
+import { VehiclePickerDialog } from '@/components/vehicle-picker-dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { CalendarDays } from 'lucide-react'
+
+interface Vehicle {
+  id: string
+  make: string
+  model: string
+  year: number
+  licensePlate: string | null
+  customer: { id: string; name: string; company: string | null } | null
+}
+
+interface Customer {
+  id: string
+  name: string
+  company: string | null
+}
+
+interface CalendarClientProps {
+  initialEvents: CalendarEvent[]
+  initialMonth: number
+  initialYear: number
+  initialDay: number
+  todayStr: string // YYYY-MM-DD computed on server to avoid hydration mismatch
+  vehicles: Vehicle[]
+  customers: Customer[]
+  currencyCode: string
+  /** Channels the workshop can actually send on, resolved on the server */
+  messageChannels: MessageChannel[]
+}
+
+function getMonthDays(year: number, month: number, weekStartDay: number) {
+  const firstDay = new Date(year, month, 1)
+  const lastDay = new Date(year, month + 1, 0)
+  const startPad = (firstDay.getDay() - weekStartDay + 7) % 7
+
+  const days: Date[] = []
+
+  // Previous month padding
+  for (let i = startPad - 1; i >= 0; i--) {
+    days.push(new Date(year, month, -i))
+  }
+
+  // Current month days
+  for (let d = 1; d <= lastDay.getDate(); d++) {
+    days.push(new Date(year, month, d))
+  }
+
+  // Next month padding (fill to complete the last week)
+  const remaining = 7 - (days.length % 7)
+  if (remaining < 7) {
+    for (let i = 1; i <= remaining; i++) {
+      days.push(new Date(year, month + 1, i))
+    }
+  }
+
+  return days
+}
+
+export default function CalendarClient({
+  initialEvents,
+  initialMonth,
+  initialYear,
+  initialDay,
+  todayStr,
+  vehicles,
+  customers,
+  currencyCode,
+  messageChannels,
+}: CalendarClientProps) {
+  const t = useTranslations('calendar')
+  const { weekStartDay } = useDateSettings()
+  const WEEKDAY_LABELS = [
+    t('weekdays.sun'),
+    t('weekdays.mon'),
+    t('weekdays.tue'),
+    t('weekdays.wed'),
+    t('weekdays.thu'),
+    t('weekdays.fri'),
+    t('weekdays.sat'),
+  ]
+  const WEEKDAYS = Array.from({ length: 7 }, (_, i) => WEEKDAY_LABELS[(weekStartDay + i) % 7])
+  const MONTH_NAMES = [
+    t('months.january'),
+    t('months.february'),
+    t('months.march'),
+    t('months.april'),
+    t('months.may'),
+    t('months.june'),
+    t('months.july'),
+    t('months.august'),
+    t('months.september'),
+    t('months.october'),
+    t('months.november'),
+    t('months.december'),
+  ]
+
+  const [month, setMonth] = useState(initialMonth)
+  const [year, setYear] = useState(initialYear)
+  const [events, setEvents] = useState<CalendarEvent[]>(initialEvents)
+  const [loading, setLoading] = useState(false)
+  const [selectedDate, setSelectedDate] = useState<Date>(
+    () => new Date(initialYear, initialMonth, initialDay)
+  )
+
+  // Filters
+  const [showServices, setShowServices] = useState(true)
+  const [showReminders, setShowReminders] = useState(true)
+  const [showQuotes, setShowQuotes] = useState(true)
+  const [showMessages, setShowMessages] = useState(true)
+
+  // Vehicle picker
+  const [showPicker, setShowPicker] = useState(false)
+  const [showDateChoice, setShowDateChoice] = useState(false)
+  const [workOrderDate, setWorkOrderDate] = useState<string | undefined>(undefined)
+
+  // Right-click menu targets: the day the menu was opened on
+  const [showReminderDialog, setShowReminderDialog] = useState(false)
+  const [showQuoteDialog, setShowQuoteDialog] = useState(false)
+  const [showMessageDialog, setShowMessageDialog] = useState(false)
+  const [menuDateStr, setMenuDateStr] = useState<string | undefined>(undefined)
+
+  const selectedDateStr = toLocalDateStr(selectedDate)
+
+  const handleNewWorkOrder = useCallback(() => {
+    if (selectedDateStr !== todayStr) {
+      setShowDateChoice(true)
+    } else {
+      setWorkOrderDate(undefined)
+      setShowPicker(true)
+    }
+  }, [selectedDateStr, todayStr])
+
+  const handleDateChoice = useCallback(
+    (useSelectedDate: boolean) => {
+      setShowDateChoice(false)
+      setWorkOrderDate(useSelectedDate ? selectedDateStr : undefined)
+      setShowPicker(true)
+    },
+    [selectedDateStr]
+  )
+
+  const filteredEvents = useMemo(() => {
+    return events.filter((e) => {
+      if (e.type === 'service' && !showServices) return false
+      if (e.type === 'reminder' && !showReminders) return false
+      if (e.type === 'quote' && !showQuotes) return false
+      if (e.type === 'message' && !showMessages) return false
+      return true
+    })
+  }, [events, showServices, showReminders, showQuotes, showMessages])
+
+  // What the displayed month holds, counted before the filters hide anything
+  const counts = useMemo(
+    () => ({
+      services: events.filter((e) => e.type === 'service').length,
+      reminders: events.filter((e) => e.type === 'reminder').length,
+      quotes: events.filter((e) => e.type === 'quote').length,
+      messages: events.filter((e) => e.type === 'message').length,
+      total: events.length,
+    }),
+    [events]
+  )
+
+  const days = getMonthDays(year, month, weekStartDay)
+
+  const fetchEvents = useCallback(async (y: number, m: number) => {
+    setLoading(true)
+    const start = new Date(y, m, 1)
+    const end = new Date(y, m + 1, 0)
+    const result = await getCalendarEvents({
+      start: toLocalDateStr(start),
+      end: toLocalDateStr(end),
+    })
+    if (result.success && result.data) {
+      setEvents(result.data)
+    }
+    setLoading(false)
+  }, [])
+
+  // Noon parse, so the seeded day survives any timezone the workshop sits in.
+  // Memoised because the reminder dialog re-seeds whenever this value changes.
+  const menuDate = useMemo(
+    () => (menuDateStr ? new Date(`${menuDateStr}T12:00:00`) : undefined),
+    [menuDateStr]
+  )
+
+  // The reminder dialog picks vehicles from a flat list with the customer inlined
+  const reminderVehicles = useMemo(
+    () =>
+      vehicles.map((v) => ({
+        id: v.id,
+        make: v.make,
+        model: v.model,
+        year: v.year,
+        licensePlate: v.licensePlate,
+        customerName: v.customer?.name ?? null,
+        customerId: v.customer?.id ?? null,
+      })),
+    [vehicles]
+  )
+
+  // Right-click actions carry their day explicitly, so no date-choice prompt
+  const handleMenuWorkOrder = useCallback((dateStr: string) => {
+    setWorkOrderDate(dateStr)
+    setShowPicker(true)
+  }, [])
+
+  const handleMenuReminder = useCallback((dateStr: string) => {
+    setMenuDateStr(dateStr)
+    setShowReminderDialog(true)
+  }, [])
+
+  const handleMenuQuote = useCallback((dateStr: string) => {
+    setMenuDateStr(dateStr)
+    setShowQuoteDialog(true)
+  }, [])
+
+  const handleMenuMessage = useCallback((dateStr: string) => {
+    setMenuDateStr(dateStr)
+    setShowMessageDialog(true)
+  }, [])
+
+  const refreshMonth = useCallback(() => {
+    fetchEvents(year, month)
+  }, [fetchEvents, year, month])
+
+  const goToPrev = () => {
+    const newMonth = month === 0 ? 11 : month - 1
+    const newYear = month === 0 ? year - 1 : year
+    setMonth(newMonth)
+    setYear(newYear)
+    setSelectedDate(new Date(newYear, newMonth, 1))
+    fetchEvents(newYear, newMonth)
+  }
+
+  const goToNext = () => {
+    const newMonth = month === 11 ? 0 : month + 1
+    const newYear = month === 11 ? year + 1 : year
+    setMonth(newMonth)
+    setYear(newYear)
+    setSelectedDate(new Date(newYear, newMonth, 1))
+    fetchEvents(newYear, newMonth)
+  }
+
+  const goToToday = () => {
+    const now = new Date()
+    const needsFetch = now.getMonth() !== month || now.getFullYear() !== year
+    setMonth(now.getMonth())
+    setYear(now.getFullYear())
+    setSelectedDate(now)
+    if (needsFetch) {
+      fetchEvents(now.getFullYear(), now.getMonth())
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-4 lg:grid-cols-3">
+        {/* Calendar grid */}
+        <div className="lg:col-span-2">
+          <Card>
+            <CardContent className="p-4">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="h-8 w-8"
+                    onClick={goToPrev}
+                    aria-label={t('previousMonth')}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className="h-8 w-8"
+                    onClick={goToNext}
+                    aria-label={t('nextMonth')}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                  <h2 className="text-lg font-semibold ml-2">
+                    {MONTH_NAMES[month]} {year}
+                  </h2>
+                  {loading && (
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground ml-2" />
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant="outline" onClick={goToToday}>
+                    {t('today')}
+                  </Button>
+                  <Button size="sm" onClick={handleNewWorkOrder}>
+                    <Plus className="h-4 w-4 mr-1" />
+                    {t('workOrder')}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Filters, each carrying what the month holds of that type */}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-3 text-sm">
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <Checkbox checked={showServices} onCheckedChange={(v) => setShowServices(!!v)} />
+                  <div className="h-2 w-2 rounded-full bg-blue-500" />
+                  <span className="text-muted-foreground">{t('filters.services')}</span>
+                  <span className="font-medium tabular-nums">{counts.services}</span>
+                </label>
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <Checkbox
+                    checked={showReminders}
+                    onCheckedChange={(v) => setShowReminders(!!v)}
+                  />
+                  <div className="h-2 w-2 rounded-full bg-amber-500" />
+                  <span className="text-muted-foreground">{t('filters.reminders')}</span>
+                  <span className="font-medium tabular-nums">{counts.reminders}</span>
+                </label>
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <Checkbox checked={showQuotes} onCheckedChange={(v) => setShowQuotes(!!v)} />
+                  <div className="h-2 w-2 rounded-full bg-violet-500" />
+                  <span className="text-muted-foreground">{t('filters.quotes')}</span>
+                  <span className="font-medium tabular-nums">{counts.quotes}</span>
+                </label>
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <Checkbox checked={showMessages} onCheckedChange={(v) => setShowMessages(!!v)} />
+                  <div className="h-2 w-2 rounded-full bg-sky-500" />
+                  <span className="text-muted-foreground">{t('filters.messages')}</span>
+                  <span className="font-medium tabular-nums">{counts.messages}</span>
+                </label>
+                <span className="text-xs text-muted-foreground ml-auto">
+                  {t('monthTotal', { count: counts.total })}
+                </span>
+              </div>
+
+              {/* Weekday headers */}
+              <div className="grid grid-cols-7 gap-px mb-1">
+                {WEEKDAYS.map((day) => (
+                  <div
+                    key={day}
+                    className="text-center text-xs font-medium text-muted-foreground py-1"
+                  >
+                    {day}
+                  </div>
+                ))}
+              </div>
+
+              {/* Day grid */}
+              <div className="grid grid-cols-7 gap-px">
+                {days.map((date) => {
+                  const dateStr = toLocalDateStr(date)
+                  return (
+                    <CalendarDayCell
+                      key={dateStr}
+                      date={date}
+                      events={filteredEvents}
+                      isCurrentMonth={date.getMonth() === month}
+                      isToday={dateStr === todayStr}
+                      isSelected={dateStr === selectedDateStr}
+                      onClick={() => setSelectedDate(date)}
+                      onNewWorkOrder={() => handleMenuWorkOrder(dateStr)}
+                      onNewReminder={() => handleMenuReminder(dateStr)}
+                      onNewQuote={() => handleMenuQuote(dateStr)}
+                      onScheduleMessage={() => handleMenuMessage(dateStr)}
+                    />
+                  )
+                })}
+              </div>
+
+              <div className="hidden md:flex items-center gap-1.5 pt-3 text-xs text-muted-foreground">
+                <MousePointerClick className="h-3.5 w-3.5" />
+                {t('contextMenu.hint')}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Event list sidebar */}
+        <div>
+          <Card>
+            <CardContent className="p-4">
+              <CalendarEventList
+                events={filteredEvents}
+                dateStr={selectedDateStr}
+                selectedDate={selectedDate}
+                currencyCode={currencyCode}
+              />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      <Dialog open={showDateChoice} onOpenChange={setShowDateChoice}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t('dateChoice.title')}</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            {t('dateChoice.description', {
+              selectedDate: selectedDate.toLocaleDateString(undefined, {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              }),
+            })}
+          </p>
+          <div className="flex flex-col gap-2 pt-2">
+            <Button onClick={() => handleDateChoice(true)}>
+              <CalendarDays className="h-4 w-4 mr-2" />
+              {t('dateChoice.useSelected', {
+                date: selectedDate.toLocaleDateString(undefined, {
+                  month: 'short',
+                  day: 'numeric',
+                }),
+              })}
+            </Button>
+            <Button variant="outline" onClick={() => handleDateChoice(false)}>
+              {t('dateChoice.useToday')}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <ReminderFormDialog
+        open={showReminderDialog}
+        onOpenChange={setShowReminderDialog}
+        vehicles={reminderVehicles}
+        defaultDueDate={menuDate}
+        onSaved={refreshMonth}
+      />
+
+      <NewQuoteDialog
+        open={showQuoteDialog}
+        onOpenChange={setShowQuoteDialog}
+        defaultValidUntil={menuDateStr}
+      />
+
+      <ScheduleMessageDialog
+        open={showMessageDialog}
+        onOpenChange={setShowMessageDialog}
+        availableChannels={messageChannels}
+        defaultDate={menuDateStr}
+        onSaved={refreshMonth}
+      />
+
+      <VehiclePickerDialog
+        open={showPicker}
+        onOpenChange={setShowPicker}
+        vehicles={vehicles}
+        customers={customers}
+        title={t('selectVehicle')}
+        redirectQuery={workOrderDate ? { boardDate: workOrderDate } : undefined}
+      />
+    </div>
+  )
+}

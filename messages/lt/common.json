@@ -1,0 +1,99 @@
+{
+  "brandName": "Auto Torque",
+  "buttons": {
+    "signIn": "Prisijungti",
+    "save": "Išsaugoti",
+    "saveChanges": "Išsaugoti pakeitimus",
+    "cancel": "Atšaukti",
+    "delete": "Ištrinti",
+    "submit": "Pateikti",
+    "back": "Atgal",
+    "confirm": "Patvirtinti",
+    "edit": "Redaguoti",
+    "add": "Pridėti",
+    "gotIt": "Supratau"
+  },
+  "contextMenu": {
+    "hint": "Patarimas: spustelėkite eilutę dešiniuoju mygtuku veiksmams",
+    "open": "Atidaryti",
+    "openVehicle": "Atidaryti transporto priemonę",
+    "openCustomer": "Atidaryti klientą",
+    "edit": "Redaguoti",
+    "delete": "Ištrinti"
+  },
+  "form": {
+    "email": "El. paštas",
+    "password": "Slaptažodis",
+    "emailPlaceholder": "you@example.com",
+    "name": "Vardas",
+    "phone": "Telefonas",
+    "company": "Įmonė",
+    "address": "Adresas",
+    "notes": "Pastabos"
+  },
+  "errors": {
+    "unexpected": "Įvyko netikėta klaida. Bandykite dar kartą.",
+    "error": "Klaida"
+  },
+  "terms": {
+    "termsOfService": "Paslaugų teikimo sąlygos"
+  },
+  "errorPage": {
+    "title": "Kažkas nutiko",
+    "description": "Variklis netikėtai užgeso. Mūsų mechanikai informuoti ir šalina gedimą.",
+    "tryAgain": "Bandyti dar kartą",
+    "backToDashboard": "Grįžti į valdymo skydelį"
+  },
+  "notFoundPage": {
+    "title": "Puslapis nerastas",
+    "description": "Atrodo, ši dalis vis dar servise. Puslapis, kurio ieškote, neegzistuoja arba buvo perkeltas.",
+    "backToDashboard": "Grįžti į valdymo skydelį"
+  },
+  "updateBanner": {
+    "updated": "Auto Torque atnaujinta į {version}",
+    "whatsNew": "Žiūrėti naujienas",
+    "dismiss": "Uždaryti"
+  },
+  "pagination": {
+    "showing": "Rodoma {start}–{end} iš {total}",
+    "perPage": "puslapyje",
+    "pageOf": "Puslapis {page} iš {pages}",
+    "first": "Pirmas puslapis",
+    "previous": "Ankstesnis puslapis",
+    "next": "Kitas puslapis",
+    "last": "Paskutinis puslapis"
+  },
+  "shared": {
+    "close": "Uždaryti",
+    "viewPlans": "Peržiūrėti planus",
+    "manageLicense": "Tvarkyti licenciją",
+    "installOwn": "Įdiekite savo",
+    "install": "Įdiegti",
+    "installApp": "Įdiegti programą",
+    "installTorqvoice": "Įdiegti Auto Torque",
+    "dismiss": "Atmesti",
+    "useCamera": "Naudoti kamerą",
+    "enterManually": "Įvesti ranka",
+    "enterBarcode": "Įveskite brūkšninį kodą…",
+    "scanHint": "Nukreipkite kamerą į brūkšninį kodą arba įveskite jį ranka",
+    "iosInstallHint": "Palieskite Bendrinti > Įtraukti į pradžios ekraną",
+    "installDescription": "Įtraukite į pradžios ekraną, kad pasiektumėte greičiau",
+    "enterFullscreen": "Visas ekranas",
+    "exitFullscreen": "Išjungti visą ekraną"
+  },
+  "broadcast": {
+    "dismiss": "Uždaryti",
+    "title": "Pranešimas visiems",
+    "description": "Rodomas kiekvieno puslapio viršuje visiems, prisijungusiems ar ne. Palikite tuščią, jei pranešimo nereikia.",
+    "message": "Pranešimas",
+    "level": "Svarbumas",
+    "post": "Paskelbti pranešimą",
+    "clear": "Pašalinti pranešimą",
+    "levelInfo": "Informacija",
+    "levelWarning": "Įspėjimas",
+    "levelCritical": "Kritinis",
+    "placeholder": "pvz. Turime serverių infrastruktūros problemų ir jas sprendžiame.",
+    "posted": "Pranešimas paskelbtas",
+    "cleared": "Pranešimas pašalintas"
+  }
+}

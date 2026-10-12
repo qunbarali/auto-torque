@@ -1,0 +1,190 @@
+export enum PermissionAction {
+  CREATE = 'create',
+  READ = 'read',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  MANAGE = 'manage',
+}
+
+export enum PermissionSubject {
+  DASHBOARD = 'dashboard',
+  VEHICLES = 'vehicles',
+  CUSTOMERS = 'customers',
+  WORK_ORDERS = 'work_orders',
+  QUOTES = 'quotes',
+  SERVICES = 'services',
+  BILLING = 'billing',
+  INVENTORY = 'inventory',
+  LABOR_PRESETS = 'labor_presets',
+  INSPECTIONS = 'inspections',
+  TIRE_HOTEL = 'tire_hotel',
+  REPORTS = 'reports',
+  SETTINGS = 'settings',
+  WORK_BOARD = 'work_board',
+  AI_ASSISTANT = 'ai_assistant',
+}
+
+export type PermissionInput = {
+  action: PermissionAction
+  subject: PermissionSubject
+}
+
+export type PermissionGroup = {
+  name: string
+  subject: PermissionSubject
+  permissions: {
+    action: PermissionAction
+    label: string
+  }[]
+}
+
+export const permissionGroups: PermissionGroup[] = [
+  {
+    name: 'Dashboard',
+    subject: PermissionSubject.DASHBOARD,
+    permissions: [{ action: PermissionAction.READ, label: 'View' }],
+  },
+  {
+    name: 'Vehicles',
+    subject: PermissionSubject.VEHICLES,
+    permissions: [
+      { action: PermissionAction.CREATE, label: 'Create' },
+      { action: PermissionAction.READ, label: 'View' },
+      { action: PermissionAction.UPDATE, label: 'Edit' },
+      { action: PermissionAction.DELETE, label: 'Delete' },
+    ],
+  },
+  {
+    name: 'Customers',
+    subject: PermissionSubject.CUSTOMERS,
+    permissions: [
+      { action: PermissionAction.CREATE, label: 'Create' },
+      { action: PermissionAction.READ, label: 'View' },
+      { action: PermissionAction.UPDATE, label: 'Edit' },
+      { action: PermissionAction.DELETE, label: 'Delete' },
+    ],
+  },
+  {
+    name: 'Work Orders',
+    subject: PermissionSubject.WORK_ORDERS,
+    permissions: [
+      { action: PermissionAction.CREATE, label: 'Create' },
+      { action: PermissionAction.READ, label: 'View' },
+      { action: PermissionAction.UPDATE, label: 'Edit' },
+      { action: PermissionAction.DELETE, label: 'Delete' },
+    ],
+  },
+  {
+    name: 'Quotes',
+    subject: PermissionSubject.QUOTES,
+    permissions: [
+      { action: PermissionAction.CREATE, label: 'Create' },
+      { action: PermissionAction.READ, label: 'View' },
+      { action: PermissionAction.UPDATE, label: 'Edit' },
+      { action: PermissionAction.DELETE, label: 'Delete' },
+    ],
+  },
+  {
+    name: 'Services',
+    subject: PermissionSubject.SERVICES,
+    permissions: [
+      { action: PermissionAction.CREATE, label: 'Create' },
+      { action: PermissionAction.READ, label: 'View' },
+      { action: PermissionAction.UPDATE, label: 'Edit' },
+      { action: PermissionAction.DELETE, label: 'Delete' },
+    ],
+  },
+  {
+    name: 'Billing',
+    subject: PermissionSubject.BILLING,
+    permissions: [
+      { action: PermissionAction.CREATE, label: 'Create' },
+      { action: PermissionAction.READ, label: 'View' },
+      { action: PermissionAction.UPDATE, label: 'Edit' },
+      { action: PermissionAction.DELETE, label: 'Delete' },
+    ],
+  },
+  {
+    name: 'Inventory',
+    subject: PermissionSubject.INVENTORY,
+    permissions: [
+      { action: PermissionAction.CREATE, label: 'Create' },
+      { action: PermissionAction.READ, label: 'View' },
+      { action: PermissionAction.UPDATE, label: 'Edit' },
+      { action: PermissionAction.DELETE, label: 'Delete' },
+    ],
+  },
+  {
+    name: 'Labor Presets',
+    subject: PermissionSubject.LABOR_PRESETS,
+    permissions: [
+      { action: PermissionAction.CREATE, label: 'Create' },
+      { action: PermissionAction.READ, label: 'View' },
+      { action: PermissionAction.UPDATE, label: 'Edit' },
+      { action: PermissionAction.DELETE, label: 'Delete' },
+    ],
+  },
+  {
+    name: 'Inspections',
+    subject: PermissionSubject.INSPECTIONS,
+    permissions: [
+      { action: PermissionAction.CREATE, label: 'Create' },
+      { action: PermissionAction.READ, label: 'View' },
+      { action: PermissionAction.UPDATE, label: 'Edit' },
+      { action: PermissionAction.DELETE, label: 'Delete' },
+    ],
+  },
+  {
+    name: 'Tire Hotel',
+    subject: PermissionSubject.TIRE_HOTEL,
+    permissions: [
+      { action: PermissionAction.CREATE, label: 'Create' },
+      { action: PermissionAction.READ, label: 'View' },
+      { action: PermissionAction.UPDATE, label: 'Edit' },
+      { action: PermissionAction.DELETE, label: 'Delete' },
+      { action: PermissionAction.MANAGE, label: 'Manage storage layout' },
+    ],
+  },
+  {
+    name: 'Reports',
+    subject: PermissionSubject.REPORTS,
+    permissions: [{ action: PermissionAction.READ, label: 'View' }],
+  },
+  {
+    name: 'Work Board',
+    subject: PermissionSubject.WORK_BOARD,
+    permissions: [
+      { action: PermissionAction.CREATE, label: 'Create' },
+      { action: PermissionAction.READ, label: 'View' },
+      { action: PermissionAction.UPDATE, label: 'Edit' },
+      { action: PermissionAction.DELETE, label: 'Delete' },
+    ],
+  },
+  {
+    name: 'AI Assistant',
+    subject: PermissionSubject.AI_ASSISTANT,
+    permissions: [{ action: PermissionAction.READ, label: 'View' }],
+  },
+  {
+    name: 'Settings',
+    subject: PermissionSubject.SETTINGS,
+    permissions: [
+      { action: PermissionAction.READ, label: 'View' },
+      { action: PermissionAction.UPDATE, label: 'Edit' },
+    ],
+  },
+]
+
+export function hasPermission(
+  userPermissions: { action: string; subject: string }[],
+  required: PermissionInput
+): boolean {
+  return userPermissions.some((p) => p.action === required.action && p.subject === required.subject)
+}
+
+export function hasAllPermissions(
+  userPermissions: { action: string; subject: string }[],
+  required: PermissionInput[]
+): boolean {
+  return required.every((req) => hasPermission(userPermissions, req))
+}

@@ -1,0 +1,17 @@
+{
+  "error": "Impossibile caricare i promemoria",
+  "showing": "{count} di {total} visualizzati",
+  "deleted": "Promemoria eliminato",
+  "deleteError": "Impossibile eliminare il promemoria",
+  "vehicle": "Veicolo",
+  "selectVehicle": "Seleziona veicolo...",
+  "searchVehicle": "Cerca veicoli...",
+  "noVehicle": "Nessun veicolo trovato.",
+  "pickDate": "Seleziona una data",
+  "openMenu": "Open menu",
+  "relatesTo": "Riguarda (opzionale)",
+  "selectCustomer": "Cliente (opzionale)",
+  "noneOption": "Nessuno",
+  "workshopHint": "Nessun cliente o veicolo selezionato: promemoria generale dell'officina.",
+  "workshopReminder": "Officina"
+}

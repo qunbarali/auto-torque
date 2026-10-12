@@ -1,0 +1,99 @@
+{
+  "brandName": "Auto Torque",
+  "buttons": {
+    "signIn": "Logg inn",
+    "save": "Lagre",
+    "saveChanges": "Lagre endringer",
+    "cancel": "Avbryt",
+    "delete": "Slett",
+    "submit": "Send inn",
+    "back": "Tilbake",
+    "confirm": "Bekreft",
+    "edit": "Rediger",
+    "add": "Legg til",
+    "gotIt": "Skjønner"
+  },
+  "contextMenu": {
+    "hint": "Tips: høyreklikk på en rad for handlinger",
+    "open": "Åpne",
+    "openVehicle": "Åpne kjøretøy",
+    "openCustomer": "Åpne kunde",
+    "edit": "Rediger",
+    "delete": "Slett"
+  },
+  "form": {
+    "email": "E-post",
+    "password": "Passord",
+    "emailPlaceholder": "you@example.com",
+    "name": "Navn",
+    "phone": "Telefon",
+    "company": "Firma",
+    "address": "Adresse",
+    "notes": "Notater"
+  },
+  "errors": {
+    "unexpected": "En uventet feil oppstod. Vennligst prøv igjen.",
+    "error": "Feil"
+  },
+  "terms": {
+    "termsOfService": "Vilkår for bruk"
+  },
+  "errorPage": {
+    "title": "Noe gikk galt",
+    "description": "Motoren stoppet uventet. Mekanikerne våre er varslet og jobber med saken.",
+    "tryAgain": "Prøv igjen",
+    "backToDashboard": "Tilbake til dashbordet"
+  },
+  "notFoundPage": {
+    "title": "Siden ble ikke funnet",
+    "description": "Det ser ut som denne delen fortsatt er på verkstedet. Siden du leter etter finnes ikke eller har blitt flyttet.",
+    "backToDashboard": "Tilbake til dashbordet"
+  },
+  "updateBanner": {
+    "updated": "Auto Torque er oppdatert til {version}",
+    "whatsNew": "Se hva som er nytt",
+    "dismiss": "Lukk"
+  },
+  "pagination": {
+    "showing": "Viser {start}–{end} av {total}",
+    "perPage": "per side",
+    "pageOf": "Side {page} av {pages}",
+    "first": "Første side",
+    "previous": "Forrige side",
+    "next": "Neste side",
+    "last": "Siste side"
+  },
+  "shared": {
+    "close": "Lukk",
+    "viewPlans": "Se abonnementer",
+    "manageLicense": "Administrer lisens",
+    "installOwn": "Installer din egen",
+    "install": "Installer",
+    "installApp": "Installer app",
+    "installTorqvoice": "Installer Auto Torque",
+    "dismiss": "Lukk",
+    "useCamera": "Bruk kamera",
+    "enterManually": "Skriv inn manuelt",
+    "enterBarcode": "Skriv inn strekkode…",
+    "scanHint": "Rett kameraet mot en strekkode, eller skriv den inn manuelt",
+    "iosInstallHint": "Trykk Del > Legg til på Hjem-skjerm",
+    "installDescription": "Legg den til på hjem-skjermen for rask tilgang",
+    "enterFullscreen": "Fullskjerm",
+    "exitFullscreen": "Avslutt fullskjerm"
+  },
+  "broadcast": {
+    "dismiss": "Lukk",
+    "title": "Melding til alle",
+    "description": "Vises øverst på hver side, for alle, innlogget eller ikke. La den stå tom for ingen melding.",
+    "message": "Melding",
+    "level": "Alvorlighet",
+    "post": "Publiser melding",
+    "clear": "Fjern melding",
+    "levelInfo": "Informasjon",
+    "levelWarning": "Advarsel",
+    "levelCritical": "Kritisk",
+    "placeholder": "f.eks. Vi har problemer med serverinfrastrukturen vår og jobber med saken.",
+    "posted": "Meldingen er publisert",
+    "cleared": "Meldingen er fjernet"
+  }
+}

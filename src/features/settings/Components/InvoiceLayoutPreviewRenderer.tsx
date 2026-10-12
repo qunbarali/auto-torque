@@ -1,0 +1,374 @@
+'use client'
+
+import { useMemo, useState, useEffect } from 'react'
+import { useMessages, useTranslations } from 'next-intl'
+import { PDFViewer } from '@react-pdf/renderer'
+import '@/features/vehicles/Components/invoice-pdf/fonts.client'
+import { InvoicePDF } from '@/features/vehicles/Components/InvoicePDF'
+import { QuotePDF } from '@/features/quotes/Components/QuotePDF'
+import type { InvoiceLayoutPreviewProps } from './InvoiceLayoutPreview'
+import { useServiceType } from '@/components/service-type-context'
+
+// ---------------------------------------------------------------------------
+// Dummy data matching InvoiceData type exactly
+// ---------------------------------------------------------------------------
+
+/** The value once it has stopped changing for `delay` milliseconds. */
+function useSettled<T>(value: T, delay: number): T {
+  const [settled, setSettled] = useState(value)
+  useEffect(() => {
+    const timer = setTimeout(() => setSettled(value), delay)
+    return () => clearTimeout(timer)
+  }, [value, delay])
+  return settled
+}
+
+function buildDummyCustomFields(customFields?: InvoiceLayoutPreviewProps['customFields']) {
+  if (!customFields) return []
+  return customFields
+    .filter((f) => f.isActive && f.entityType === 'service_record')
+    .map((f) => ({
+      fieldId: f.id,
+      label: f.label,
+      value:
+        f.fieldType === 'checkbox'
+          ? 'true'
+          : f.fieldType === 'number'
+            ? '42'
+            : f.fieldType === 'date'
+              ? '2026-03-10'
+              : 'Sample value',
+      fieldType: f.fieldType,
+    }))
+}
+
+/** A translator, narrowed to what the sample job asks of it. */
+type PreviewT = (key: string) => string
+
+/**
+ * The made-up job the preview draws. The prose is translated, because the
+ * sheet it stands for is printed in the reader's language; the names, plates
+ * and part numbers are invented and read the same everywhere.
+ */
+const dummyInvoiceData = (t: PreviewT) => ({
+  id: 'preview-dummy-id-00000001',
+  title: t('preview.title'),
+  description: null,
+  type: t('preview.serviceType'),
+  serviceDate: new Date('2026-03-10'),
+  startDateTime: new Date('2026-03-10'),
+  shopName: t('designer.sample.companyName'),
+  techName: 'Mike Johnson',
+  mileage: 45230,
+  diagnosticNotes: null,
+  findings: [
+    {
+      description: t('preview.findingPads'),
+      severity: 'needs_work',
+      notes: t('preview.findingPadsNote'),
+    },
+    { description: t('preview.findingOilLeak'), severity: 'monitor', notes: null },
+  ],
+  invoiceNotes: `<p>${t('preview.invoiceNotes')}</p>`,
+  subtotal: 314.5,
+  taxRate: 8,
+  taxAmount: 25.16,
+  totalAmount: 339.66,
+  cost: 339.66,
+  invoiceNumber: 'INV-2026-1001',
+  discountType: null,
+  discountValue: 0,
+  discountAmount: 0,
+  partItems: [
+    {
+      partNumber: 'BP-001',
+      name: t('preview.partBrakePads'),
+      quantity: 2,
+      unitPrice: 45.0,
+      total: 90.0,
+    },
+    {
+      partNumber: 'OF-042',
+      name: t('preview.partOilFilter'),
+      quantity: 1,
+      unitPrice: 12.0,
+      total: 12.0,
+    },
+    {
+      partNumber: 'SO-530',
+      name: t('preview.partSyntheticOil'),
+      quantity: 5,
+      unit: 'l',
+      unitPrice: 8.5,
+      total: 42.5,
+    },
+  ],
+  laborItems: [
+    {
+      description: t('preview.laborBrakeReplacement'),
+      hours: 1.5,
+      rate: 85.0,
+      total: 127.5,
+    },
+    { description: t('preview.laborOilChange'), hours: 0.5, rate: 85.0, total: 42.5 },
+  ],
+  vehicle: {
+    make: 'Toyota',
+    model: 'Camry',
+    year: 2022,
+    vin: '1HGBH41JXMN109186',
+    licensePlate: 'ABC-1234',
+    mileage: 45230,
+    customer: {
+      name: 'John Smith',
+      email: 'john@example.com',
+      phone: '(555) 123-4567',
+      address: '123 Main Street, Springfield',
+      company: 'Smith Auto Group',
+      taxId: 'GB123456789',
+    },
+  },
+})
+
+const dummyQuoteData = (t: PreviewT) => ({
+  quoteNumber: 'QT-2026-1001',
+  title: t('preview.title'),
+  description: null,
+  validUntil: new Date('2026-04-10'),
+  createdAt: new Date('2026-03-10'),
+  subtotal: 314.5,
+  taxRate: 8,
+  taxAmount: 25.16,
+  discountType: null,
+  discountValue: 0,
+  discountAmount: 0,
+  totalAmount: 339.66,
+  notes: `<p>${t('preview.quoteNotes')}</p>`,
+  partItems: [
+    {
+      partNumber: 'BP-001',
+      name: t('preview.partBrakePads'),
+      quantity: 2,
+      unitPrice: 45.0,
+      total: 90.0,
+    },
+    {
+      partNumber: 'OF-042',
+      name: t('preview.partOilFilter'),
+      quantity: 1,
+      unitPrice: 12.0,
+      total: 12.0,
+    },
+    {
+      partNumber: 'SO-530',
+      name: t('preview.partSyntheticOil'),
+      quantity: 5,
+      unit: 'l',
+      unitPrice: 8.5,
+      total: 42.5,
+    },
+  ],
+  laborItems: [
+    {
+      description: t('preview.laborBrakeReplacement'),
+      hours: 1.5,
+      rate: 85.0,
+      total: 127.5,
+    },
+    { description: t('preview.laborOilChange'), hours: 0.5, rate: 85.0, total: 42.5 },
+  ],
+  customer: {
+    name: 'John Smith',
+    email: 'john@example.com',
+    phone: '(555) 123-4567',
+    address: '123 Main Street, Springfield',
+    company: 'Smith Auto Group',
+    taxId: 'GB123456789',
+  },
+  vehicle: {
+    make: 'Toyota',
+    model: 'Camry',
+    year: 2022,
+    vin: '1HGBH41JXMN109186',
+    licensePlate: 'ABC-1234',
+  },
+})
+
+const SAMPLE_WORKSHOP = {
+  name: 'Your Workshop',
+  address: '123 Main Street, Springfield',
+  phone: '(555) 123-4567',
+  email: 'shop@example.com',
+}
+
+const DUMMY_INVOICE_SETTINGS = {
+  bankAccount: '1234 5678 9012 3456',
+  orgNumber: '912 345 678',
+  paymentTerms: 'Net 14',
+  footerNote: '',
+  showBankAccount: true,
+  showOrgNumber: true,
+  dueDays: 14,
+  currencyCode: 'USD',
+  currencyFormat: 'symbol' as const,
+  unitSystem: 'imperial',
+}
+
+// ---------------------------------------------------------------------------
+// Renderer (loaded only client-side via dynamic import)
+// ---------------------------------------------------------------------------
+
+/** The workshop's own details where it has them, the sample's where it has not. */
+export function resolveWorkshop(
+  workshop: InvoiceLayoutPreviewProps['workshop'],
+  /** The stand-in name, translated by the caller that has a translator. */
+  sampleName: string = SAMPLE_WORKSHOP.name
+) {
+  return {
+    name: workshop?.name?.trim() || sampleName,
+    address: workshop?.address?.trim() || SAMPLE_WORKSHOP.address,
+    phone: workshop?.phone?.trim() || SAMPLE_WORKSHOP.phone,
+    email: workshop?.email?.trim() || SAMPLE_WORKSHOP.email,
+    // No stand-in for the slogan. A workshop always has a name and an address,
+    // so a placeholder there reads as "yours goes here"; an invented slogan
+    // reads as one the workshop never wrote.
+    slogan: workshop?.slogan?.trim() || undefined,
+  }
+}
+
+export function InvoiceLayoutPreviewRenderer({
+  config,
+  documentType,
+  customFields,
+  template,
+  logoUrl,
+  workshop,
+}: InvoiceLayoutPreviewProps) {
+  const messages = useMessages()
+  const t = useTranslations('settings')
+  const serviceType = useServiceType()
+
+  const previewWorkshop = useMemo(
+    () => resolveWorkshop(workshop, t('designer.sample.companyName')),
+    [workshop, t]
+  )
+
+  const labels = useMemo(() => {
+    const pdf = (messages?.pdf ?? {}) as Record<string, Record<string, string>>
+    const namespace = documentType === 'quote' ? 'quote' : 'invoice'
+    // The quote sheet is drawn by the invoice's builder, so its shared labels
+    // live in the invoice namespace. Layering quote wording on top keeps both
+    // translated instead of falling back to English column heads.
+    const baseLabels = {
+      ...(pdf.invoice ?? {}),
+      ...(pdf[namespace] ?? {}),
+      ...(pdf.common ?? {}),
+    }
+    // Override labels for marine service type
+    if (serviceType === 'marine') {
+      const ns = pdf[namespace] ?? {}
+      if (ns.mileageMarine) baseLabels.mileage = ns.mileageMarine
+      if (ns.vinMarine) baseLabels.vin = ns.vinMarine
+      if (ns.plateMarine) baseLabels.plate = ns.plateMarine
+      if (ns.vehicleMarine) baseLabels.vehicle = ns.vehicleMarine
+      baseLabels.km = 'hrs'
+      baseLabels.mi = 'hrs'
+    }
+    return baseLabels
+  }, [messages, documentType, serviceType])
+
+  const dummyCf = useMemo(() => buildDummyCustomFields(customFields), [customFields])
+
+  const templateConfig = useMemo(
+    () => ({
+      primaryColor: template.primaryColor,
+      // Empty means the workshop has not chosen one, which is white paper.
+      backgroundColor: template.backgroundColor || undefined,
+      textColor: template.textColor || undefined,
+      companyTextColor: template.companyTextColor || undefined,
+      frameBorderColor: template.frameBorderColor || undefined,
+      frameShadow: template.frameShadow,
+      frameRadius: Number(template.frameRadius) || 0,
+      frameSide: template.frameSide === 'right' ? ('right' as const) : ('left' as const),
+      fontFamily: template.fontFamily,
+      headerStyle: template.headerStyle,
+      logoSize: template.logoSize,
+      showLogo: true,
+      showCompanyName: true,
+      layoutConfig: config,
+    }),
+    [template, config]
+  )
+
+  // Remount on anything the document is drawn from, not a hand-picked subset.
+  // The key used to list four properties of each section, so every option added
+  // since — the colors, the frame edge, whether a section is boxed, which
+  // header fields show — changed the document without changing the key, and
+  // looked from the outside like it did nothing.
+  const documentKey = useMemo(
+    () => JSON.stringify({ config, templateConfig, logoUrl, previewWorkshop }),
+    [config, templateConfig, logoUrl, previewWorkshop]
+  )
+  // Settled, because a color picker fires on every step of a drag and each
+  // distinct key is a full re-render of the document.
+  const configKey = useSettled(documentKey, 250)
+
+  const invoiceData = useMemo(
+    () => ({ ...dummyInvoiceData(t), customFields: dummyCf }),
+    [dummyCf, t]
+  )
+  const quoteData = useMemo(() => dummyQuoteData(t), [t])
+
+  const isQuote = documentType === 'quote'
+
+  // Generate dummy Telegram QR for preview if section is visible
+  const telegramQrVisible = config.sections.some((s) => s.id === 'telegram_qr' && s.visible)
+  const [telegramQrDataUri, setTelegramQrDataUri] = useState<string | undefined>()
+  useEffect(() => {
+    if (!telegramQrVisible) {
+      setTelegramQrDataUri(undefined)
+      return
+    }
+    import('qrcode').then((QRCode) => {
+      QRCode.toDataURL('https://t.me/example_bot', { width: 200, margin: 1 }).then((uri) =>
+        setTelegramQrDataUri(uri)
+      )
+    })
+  }, [telegramQrVisible])
+
+  return (
+    <div className="rounded-lg shadow-sm overflow-hidden bg-gray-100">
+      <PDFViewer
+        key={configKey}
+        width="100%"
+        height={920}
+        showToolbar={false}
+        style={{ border: 'none' }}
+      >
+        {isQuote ? (
+          <QuotePDF
+            data={quoteData}
+            workshop={previewWorkshop}
+            currencyCode={DUMMY_INVOICE_SETTINGS.currencyCode}
+            logoDataUri={logoUrl || undefined}
+            template={templateConfig}
+            customFields={dummyCf}
+            labels={labels}
+            layoutConfig={config}
+          />
+        ) : (
+          <InvoicePDF
+            data={invoiceData}
+            workshop={previewWorkshop}
+            invoiceSettings={DUMMY_INVOICE_SETTINGS}
+            logoDataUri={logoUrl || undefined}
+            template={templateConfig}
+            telegramQrDataUri={telegramQrDataUri}
+            telegramLabel={labels.telegramConnect || 'Chat with us on Telegram'}
+            labels={labels}
+          />
+        )}
+      </PDFViewer>
+    </div>
+  )
+}

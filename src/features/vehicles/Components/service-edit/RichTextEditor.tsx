@@ -1,0 +1,218 @@
+'use client'
+
+import { useEffect, useRef } from 'react'
+import { useEditor, EditorContent } from '@tiptap/react'
+import StarterKit from '@tiptap/starter-kit'
+import Placeholder from '@tiptap/extension-placeholder'
+import { Button } from '@/components/ui/button'
+import {
+  Bold,
+  Italic,
+  Underline as UnderlineIcon,
+  Link as LinkIcon,
+  List,
+  ListOrdered,
+  Heading2,
+  Heading3,
+  Quote,
+  Undo,
+  Redo,
+} from 'lucide-react'
+import { cn } from '@/lib/utils'
+
+interface RichTextEditorProps {
+  content: string
+  onChange: (html: string) => void
+  placeholder?: string
+}
+
+export function RichTextEditor({ content, onChange, placeholder }: RichTextEditorProps) {
+  const lastContentRef = useRef(content)
+
+  const editor = useEditor({
+    immediatelyRender: false,
+    extensions: [
+      // Link and underline come bundled with StarterKit from v3, so they are
+      // configured through it rather than added again. Registering them
+      // twice leaves two extensions answering to the same name, which tiptap
+      // warns about and which makes the toolbar's active state unreliable.
+      StarterKit.configure({
+        heading: { levels: [2, 3] },
+        link: {
+          openOnClick: false,
+          autolink: true,
+          linkOnPaste: true,
+          HTMLAttributes: {
+            rel: 'noopener noreferrer',
+            target: '_blank',
+          },
+        },
+      }),
+      Placeholder.configure({
+        placeholder: placeholder || 'Write something...',
+      }),
+    ],
+    content,
+    onUpdate: ({ editor }) => {
+      const html = editor.getHTML()
+      lastContentRef.current = html
+      onChange(html)
+    },
+    editorProps: {
+      attributes: {
+        class: 'tiptap-content px-3 py-2 text-sm outline-none h-full',
+      },
+    },
+  })
+
+  // Sync editor when content is updated externally (e.g. AI generation)
+  useEffect(() => {
+    if (editor && content !== lastContentRef.current) {
+      lastContentRef.current = content
+      editor.commands.setContent(content)
+    }
+  }, [content, editor])
+
+  if (!editor) return null
+
+  const handleSetLink = () => {
+    const previous = editor.getAttributes('link').href as string | undefined
+    const url = window.prompt('URL', previous ?? 'https://')
+    if (url === null) return
+    if (url === '') {
+      editor.chain().focus().extendMarkRange('link').unsetLink().run()
+      return
+    }
+    const normalized =
+      /^https?:\/\//i.test(url) || url.startsWith('mailto:') ? url : `https://${url}`
+    editor.chain().focus().extendMarkRange('link').setLink({ href: normalized }).run()
+  }
+
+  return (
+    <div
+      className="overflow-hidden rounded-md border border-input bg-background flex flex-col resize-y"
+      style={{ minHeight: 180 }}
+    >
+      <div className="flex flex-wrap items-center gap-0.5 border-b bg-muted/30 px-1 py-1 shrink-0">
+        <ToolbarButton
+          active={editor.isActive('bold')}
+          onClick={() => editor.chain().focus().toggleBold().run()}
+          title="Bold"
+        >
+          <Bold className="h-3.5 w-3.5" />
+        </ToolbarButton>
+        <ToolbarButton
+          active={editor.isActive('italic')}
+          onClick={() => editor.chain().focus().toggleItalic().run()}
+          title="Italic"
+        >
+          <Italic className="h-3.5 w-3.5" />
+        </ToolbarButton>
+        <ToolbarButton
+          active={editor.isActive('underline')}
+          onClick={() => editor.chain().focus().toggleUnderline().run()}
+          title="Underline"
+        >
+          <UnderlineIcon className="h-3.5 w-3.5" />
+        </ToolbarButton>
+        <ToolbarButton active={editor.isActive('link')} onClick={handleSetLink} title="Link">
+          <LinkIcon className="h-3.5 w-3.5" />
+        </ToolbarButton>
+
+        <div className="mx-0.5 h-4 w-px bg-border" />
+
+        <ToolbarButton
+          active={editor.isActive('heading', { level: 2 })}
+          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+          title="Heading"
+        >
+          <Heading2 className="h-3.5 w-3.5" />
+        </ToolbarButton>
+        <ToolbarButton
+          active={editor.isActive('heading', { level: 3 })}
+          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+          title="Subheading"
+        >
+          <Heading3 className="h-3.5 w-3.5" />
+        </ToolbarButton>
+
+        <div className="mx-0.5 h-4 w-px bg-border" />
+
+        <ToolbarButton
+          active={editor.isActive('bulletList')}
+          onClick={() => editor.chain().focus().toggleBulletList().run()}
+          title="Bullet List"
+        >
+          <List className="h-3.5 w-3.5" />
+        </ToolbarButton>
+        <ToolbarButton
+          active={editor.isActive('orderedList')}
+          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          title="Numbered List"
+        >
+          <ListOrdered className="h-3.5 w-3.5" />
+        </ToolbarButton>
+        <ToolbarButton
+          active={editor.isActive('blockquote')}
+          onClick={() => editor.chain().focus().toggleBlockquote().run()}
+          title="Quote"
+        >
+          <Quote className="h-3.5 w-3.5" />
+        </ToolbarButton>
+
+        <div className="mx-0.5 h-4 w-px bg-border" />
+
+        <ToolbarButton
+          onClick={() => editor.chain().focus().undo().run()}
+          disabled={!editor.can().undo()}
+          title="Undo"
+        >
+          <Undo className="h-3.5 w-3.5" />
+        </ToolbarButton>
+        <ToolbarButton
+          onClick={() => editor.chain().focus().redo().run()}
+          disabled={!editor.can().redo()}
+          title="Redo"
+        >
+          <Redo className="h-3.5 w-3.5" />
+        </ToolbarButton>
+      </div>
+      <div className="flex-1 overflow-y-auto">
+        <EditorContent editor={editor} className="h-full [&>.tiptap]:h-full" />
+      </div>
+    </div>
+  )
+}
+
+function ToolbarButton({
+  children,
+  active,
+  disabled,
+  onClick,
+  title,
+}: {
+  children: React.ReactNode
+  active?: boolean
+  disabled?: boolean
+  onClick: () => void
+  title: string
+}) {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      className={cn(
+        'h-7 w-7',
+        active && 'bg-accent text-accent-foreground',
+        disabled && 'opacity-40'
+      )}
+      disabled={disabled}
+      onClick={onClick}
+      title={title}
+      aria-label={title}
+    >
+      {children}
+    </Button>
+  )
+}

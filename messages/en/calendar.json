@@ -1,0 +1,82 @@
+{
+  "weekdays": {
+    "sun": "Sun",
+    "mon": "Mon",
+    "tue": "Tue",
+    "wed": "Wed",
+    "thu": "Thu",
+    "fri": "Fri",
+    "sat": "Sat"
+  },
+  "months": {
+    "january": "January",
+    "february": "February",
+    "march": "March",
+    "april": "April",
+    "may": "May",
+    "june": "June",
+    "july": "July",
+    "august": "August",
+    "september": "September",
+    "october": "October",
+    "november": "November",
+    "december": "December"
+  },
+  "stats": {
+    "services": "Services",
+    "overdue": "Overdue",
+    "pendingQuotes": "Pending Quotes",
+    "revenue": "Revenue"
+  },
+  "today": "Today",
+  "workOrder": "Work Order",
+  "filters": {
+    "services": "Services",
+    "reminders": "Reminders",
+    "quotes": "Quotes",
+    "messages": "Messages"
+  },
+  "selectVehicle": "Select Vehicle for Work Order",
+  "dateChoice": {
+    "title": "Work Order Date",
+    "description": "You have {selectedDate} selected. Which date should this work order be for?",
+    "useSelected": "Use {date}",
+    "useToday": "Use today"
+  },
+  "more": "+ {count} more",
+  "monthTotal": "{count} events this month",
+  "contextMenu": {
+    "newWorkOrder": "New work order",
+    "newReminder": "New reminder",
+    "newQuote": "New quote",
+    "openEvent": "Open ({count})",
+    "hint": "Tip: right-click a day for actions",
+    "scheduleMessage": "Schedule message"
+  },
+  "events": {
+    "status": {
+      "completed": "Completed",
+      "inProgress": "In Progress",
+      "waitingParts": "Waiting Parts",
+      "pending": "Pending",
+      "sent": "Sent",
+      "approved": "Approved",
+      "draft": "Draft",
+      "done": "Done",
+      "overdue": "Overdue",
+      "upcoming": "Upcoming",
+      "failed": "Failed",
+      "queued": "Queued"
+    },
+    "type": {
+      "service": "Service",
+      "reminder": "Reminder",
+      "quote": "Quote",
+      "message": "Message"
+    },
+    "noEvents": "No events",
+    "selectDay": "Select a day with events or create a new work order."
+  },
+  "previousMonth": "Previous month",
+  "nextMonth": "Next month"
+}

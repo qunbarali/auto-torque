@@ -1,0 +1,98 @@
+import { redirect } from 'next/navigation'
+import { db } from '@/lib/db'
+import { getCustomerSession } from '@/lib/customer-session'
+import { SETTING_KEYS } from '@/features/settings/Schema/settingsSchema'
+import { resolvePortalOrg } from '@/lib/portal-slug'
+import { getTranslations } from 'next-intl/server'
+import { PortalHeader } from './PortalHeader'
+
+export async function PortalShell({
+  orgId: orgParam,
+  children,
+}: {
+  orgId: string
+  children: React.ReactNode
+}) {
+  const t = await getTranslations('portal.shell')
+
+  // Resolve slug or id to real org
+  const org = await resolvePortalOrg(orgParam)
+
+  if (!org) {
+    return (
+      <div className="flex min-h-svh items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold">{t('notFound')}</h1>
+          <p className="mt-2 text-muted-foreground">{t('portalNotExist')}</p>
+        </div>
+      </div>
+    )
+  }
+
+  const orgId = org.id
+
+  // Check portal is enabled
+  const portalSetting = await db.appSetting.findUnique({
+    where: {
+      organizationId_key: {
+        organizationId: orgId,
+        key: SETTING_KEYS.PORTAL_ENABLED,
+      },
+    },
+  })
+
+  if (portalSetting?.value !== 'true') {
+    return (
+      <div className="flex min-h-svh items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold">{t('portalNotAvailable')}</h1>
+          <p className="mt-2 text-muted-foreground">{t('portalNotEnabled')}</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Check customer session
+  const session = await getCustomerSession()
+
+  if (!session || session.organizationId !== orgId) {
+    redirect(`/portal/${orgParam}/auth/login`)
+  }
+
+  // Get customer info
+  const customer = await db.customer.findUnique({
+    where: { id: session.customerId },
+    select: { name: true },
+  })
+
+  if (!customer) {
+    redirect(`/portal/${orgParam}/auth/login`)
+  }
+
+  // Get org branding
+  const logoSetting = await db.appSetting.findUnique({
+    where: {
+      organizationId_key: {
+        organizationId: orgId,
+        key: SETTING_KEYS.COMPANY_LOGO,
+      },
+    },
+  })
+
+  return (
+    <div className="min-h-svh bg-muted/20">
+      {/* Same top hairline as the app: primary fading out to the right. */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-x-0 top-0 z-50 h-px bg-linear-to-r from-primary via-primary/35 to-transparent"
+      />
+      <PortalHeader
+        orgId={orgParam}
+        orgName={org.name}
+        orgLogo={logoSetting?.value ? `/api/public/logo/${orgParam}` : undefined}
+        customerName={customer.name}
+      />
+      <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">{children}</main>
+    </div>
+  )
+}

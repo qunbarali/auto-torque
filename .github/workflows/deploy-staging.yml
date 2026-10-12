@@ -1,0 +1,133 @@
+name: "[Staging] Deploy"
+
+on:
+  # push:
+  #   branches: [main]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Image tag to deploy (e.g. latest, v1.3.0, dev-abc1234)"
+        required: false
+        default: "latest"
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, Linux, X64, hetzner]
+
+    steps:
+      - name: Log in to GitHub Container Registry
+        run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Create deployment files
+        env:
+          VIRTUAL_HOST: ${{ secrets.STAGING_VIRTUAL_HOST }}
+          BETTER_AUTH_SECRET: ${{ secrets.STAGING_BETTER_AUTH_SECRET }}
+          APP_URL: ${{ secrets.STAGING_APP_URL }}
+          STRIPE_SECRET_KEY: ${{ secrets.STAGING_STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STAGING_STRIPE_WEBHOOK_SECRET }}
+          STRIPE_PRO_PRICE_ID: ${{ secrets.STAGING_STRIPE_PRO_PRICE_ID }}
+          STRIPE_ENTERPRISE_PRICE_ID: ${{ secrets.STAGING_STRIPE_ENTERPRISE_PRICE_ID }}
+          DATA_PATH: ${{ secrets.DATA_PATH }}
+          POSTHOG_HOST: ${{ secrets.NEXT_PUBLIC_POSTHOG_HOST }}
+          POSTHOG_KEY: ${{ secrets.NEXT_PUBLIC_POSTHOG_KEY }}
+          BACKUP_HEARTBEAT_TOKEN: ${{ secrets.BACKUP_HEARTBEAT_TOKEN }}
+        run: |
+          mkdir -p $HOME/auto-torque-deploy/staging
+          cd $HOME/auto-torque-deploy/staging
+
+          env | grep -E '^(VIRTUAL_HOST|DATA_PATH|BETTER_AUTH_SECRET|APP_URL|STRIPE_|POSTHOG_|BACKUP_)' > .env
+
+          cat > docker-compose.yml << 'COMPOSE'
+          networks:
+            proxy:
+              external: true
+              name: proxy
+          services:
+            auto-torque-app-staging:
+              container_name: auto-torque-app-staging
+              image: ghcr.io/autotorque/auto-torque:${APP_TAG:-latest}
+              restart: unless-stopped
+              volumes:
+                - ${DATA_PATH}/auto_torque_staging_data:/app/data
+              expose:
+                - "3000"
+              environment:
+                VIRTUAL_HOST: ${VIRTUAL_HOST}
+                VIRTUAL_PORT: "3000"
+                LETSENCRYPT_HOST: ${VIRTUAL_HOST}
+                DATABASE_URL: file:/app/data/auto_torque.sqlite
+                BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+                NEXT_PUBLIC_APP_URL: ${APP_URL}
+                TORQVOICE_MODE: cloud
+                STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+                STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+                STRIPE_PRO_PRICE_ID: ${STRIPE_PRO_PRICE_ID}
+                STRIPE_ENTERPRISE_PRICE_ID: ${STRIPE_ENTERPRISE_PRICE_ID}
+                POSTHOG_HOST: ${POSTHOG_HOST}
+                BACKUP_HEARTBEAT_TOKEN: ${BACKUP_HEARTBEAT_TOKEN}
+              networks:
+                - proxy
+          COMPOSE
+
+      - name: Ensure data directory permissions
+        run: |
+          DATA_DIR="${{ secrets.DATA_PATH }}/auto_torque_staging_data"
+          mkdir -p "$DATA_DIR"
+          docker run --rm -v "$DATA_DIR":/data alpine chown -R 1001:1001 /data
+
+      - name: Check free disk space
+        run: |
+          MIN_GB=5
+          DOCKER_ROOT=$(docker info --format '{{.DockerRootDir}}' 2>/dev/null || echo /var/lib/docker)
+          AVAIL_KB=$(df -Pk "$DOCKER_ROOT" | awk 'NR==2 {print $4}')
+          AVAIL_GB=$(awk "BEGIN {printf \"%.1f\", $AVAIL_KB/1024/1024}")
+          echo "Free space on $DOCKER_ROOT: ${AVAIL_GB} GB (minimum ${MIN_GB} GB)"
+          if [ "$AVAIL_KB" -lt $((MIN_GB * 1024 * 1024)) ]; then
+            echo "::error::Not enough disk space to pull image: ${AVAIL_GB} GB free, need ${MIN_GB} GB. Aborting deploy."
+            exit 1
+          fi
+
+      - name: Back up staging SQLite database
+        run: |
+          set -euo pipefail
+          BACKUP_DIR="${{ secrets.DATA_PATH }}/db-backups/auto_torque-staging"
+          mkdir -p "$BACKUP_DIR"
+          docker run --rm -v "$BACKUP_DIR":/b alpine chown "$(id -u):$(id -g)" /b
+          MIN_GB=2
+          AVAIL_KB=$(df -Pk "$BACKUP_DIR" | awk 'NR==2 {print $4}')
+          if [ "$AVAIL_KB" -lt $((MIN_GB * 1024 * 1024)) ]; then
+            echo "::error::Insufficient free space for SQLite backup."
+            exit 1
+          fi
+          DUMP="$BACKUP_DIR/auto-torque-$(date +%Y%m%d-%H%M%S)-pre-${{ inputs.tag || 'latest' }}.sqlite"
+          docker exec auto-torque-app-staging node scripts/sqlite-backup.mjs /app/data/auto_torque.sqlite /app/data/.predeploy.sqlite
+          docker cp auto-torque-app-staging:/app/data/.predeploy.sqlite "$DUMP"
+          docker exec auto-torque-app-staging rm -f /app/data/.predeploy.sqlite
+          test -s "$DUMP"
+          echo "Verified SQLite backup: $(du -h "$DUMP" | cut -f1)"
+          ls -t "$BACKUP_DIR"/*.sqlite 2>/dev/null | tail -n +11 | xargs -r rm --
+
+      - name: Deploy staging
+        run: |
+          cd $HOME/auto-torque-deploy/staging
+          TAG=${{ inputs.tag || 'latest' }}
+          APP_TAG=$TAG docker compose up -d --pull always
+
+      - name: Health check
+        run: |
+          echo "Waiting for staging container to be ready..."
+          for i in $(seq 1 12); do
+            STATUS=$(docker inspect --format='{{.State.Status}}' auto-torque-app-staging 2>/dev/null || echo "not found")
+            if [ "$STATUS" = "running" ]; then
+              echo "Container is running!"
+              exit 0
+            fi
+            echo "Status: $STATUS, retrying in 5s..."
+            sleep 5
+          done
+          echo "::error::Container failed to start"
+          docker logs auto-torque-app-staging --tail 50
+          exit 1
+
+      - name: Prune old images and build cache
+        run: docker image prune -f && docker builder prune -f

@@ -1,0 +1,11 @@
+{
+  "panel": {
+    "title": "Уведомления",
+    "markAllRead": "Прочитать все",
+    "empty": "Уведомлений пока нет",
+    "confirmDelete": "Вы уверены?",
+    "delete": "Удалить",
+    "cancel": "Отмена"
+  },
+  "openNotifications": "Open notifications"
+}

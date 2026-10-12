@@ -1,0 +1,78 @@
+{
+  "page": {
+    "featureName": "SMS-сообщения",
+    "featureDescription": "Отправляйте и получайте SMS-сообщения с клиентами прямо из Auto Torque.",
+    "tabs": {
+      "inbox": "Входящие",
+      "scheduled": "Запланированные",
+      "sms": "SMS",
+      "whatsapp": "WhatsApp",
+      "telegram": "Telegram"
+    },
+    "smsNotConfiguredTitle": "SMS не настроен",
+    "smsNotConfiguredHint": "Подключите SMS-провайдера, чтобы отправлять и получать сообщения здесь. Запланированная почта работает и без этого.",
+    "goToSmsSettings": "Перейти к настройкам SMS"
+  },
+  "notConfigured": {
+    "title": "SMS не настроены",
+    "description": "Настройте SMS-провайдера для отправки и получения сообщений с клиентами. Поддерживаются Twilio, Vonage и Telnyx.",
+    "goToSettings": "Перейти к настройкам SMS"
+  },
+  "threads": {
+    "title": "Беседы",
+    "empty": "Бесед пока нет. Отправьте SMS со страницы клиента, чтобы начать.",
+    "loadMore": "Загрузить ещё",
+    "selectConversation": "Выберите беседу",
+    "you": "Вы: ",
+    "deleteConversation": "Удалить беседу",
+    "deleteTitle": "Удалить беседу?",
+    "deleteDescription": "Все сообщения с {name} будут безвозвратно удалены. Это действие необратимо.",
+    "deleted": "Беседа удалена",
+    "deleteError": "Не удалось удалить беседу",
+    "back": "Back",
+    "conversationMenu": "Conversation menu",
+    "searchPlaceholder": "Поиск по перепискам",
+    "noSearchResults": "Нет переписок по запросу",
+    "now": "сейчас"
+  },
+  "conversation": {
+    "noPhone": "У {name} не указан номер телефона. Добавьте номер для начала переписки.",
+    "loadOlder": "Загрузить ранние",
+    "empty": "Сообщений пока нет. Отправьте первое сообщение {name}.",
+    "placeholder": "Сообщение для {name}...",
+    "deleteMessage": "Удалить сообщение",
+    "deleteTitle": "Удалить сообщение?",
+    "deleteDescription": "Это сообщение будет безвозвратно удалено из беседы. Это действие необратимо.",
+    "messageDeleted": "Сообщение удалено",
+    "deleteError": "Не удалось удалить сообщение",
+    "sendError": "Не удалось отправить SMS",
+    "sendMessage": "Send message"
+  },
+  "sendDialog": {
+    "send": "Отправить {label}",
+    "message": "Сообщение",
+    "placeholder": "Введите сообщение...",
+    "characters": "{count} / 1600 символов",
+    "sendSms": "Отправить SMS",
+    "smsSent": "SMS отправлено",
+    "sentTo": "{label} отправлено {name} ({phone})",
+    "sendError": "Не удалось отправить SMS"
+  },
+  "compose": {
+    "newMessage": "Новое сообщение",
+    "title": "Новое сообщение",
+    "searchPlaceholder": "Поиск клиентов по имени или номеру",
+    "noMatches": "Нет клиентов по запросу",
+    "noRecipients": "Нет клиентов с номером телефона",
+    "noRecipientsHint": "Добавьте клиенту номер телефона, чтобы писать ему.",
+    "changeRecipient": "Выбрать другого",
+    "messageLabel": "Сообщение",
+    "messagePlaceholder": "Сообщение для {name}...",
+    "segments": "{chars} символов · {segments} SMS",
+    "send": "Отправить",
+    "scheduleInstead": "Лучше запланировать",
+    "sent": "Отправлено {name}",
+    "sendError": "Не удалось отправить сообщение",
+    "templates": "Шаблоны"
+  }
+}
