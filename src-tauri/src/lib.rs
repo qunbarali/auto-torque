@@ -55,6 +55,45 @@ fn has_valid_lan_origin_list(origins: &str) -> bool {
     })
 }
 
+/// Validate a remote-only client target. It must be a private LAN origin,
+/// not a public host, URL with credentials, path, query, or fragment.
+fn validate_remote_lan_origin(value: &str) -> Result<String, String> {
+    let parsed = url::Url::parse(value.trim())
+        .map_err(|_| "AUTO_TORQUE_REMOTE_URL is not a valid URL".to_string())?;
+
+    if parsed.scheme() != "http" && parsed.scheme() != "https" {
+        return Err("Remote-only mode accepts only HTTP(S) URLs".into());
+    }
+    if !parsed.username().is_empty()
+        || parsed.password().is_some()
+        || parsed.query().is_some()
+        || parsed.fragment().is_some()
+        || parsed.path() != "/"
+    {
+        return Err("Remote-only URL must be an origin only, without credentials, path, query, or fragment".into());
+    }
+
+    let host = parsed.host_str().unwrap_or_default().to_ascii_lowercase();
+    let private_ip = host.parse::<std::net::IpAddr>().ok().is_some_and(|address| {
+        match address {
+            std::net::IpAddr::V4(ip) => {
+                ip.is_private() || ip.is_loopback() || ip.is_link_local()
+            }
+            std::net::IpAddr::V6(ip) => {
+                ip.is_loopback()
+                    || (ip.segments()[0] & 0xfe00) == 0xfc00
+                    || (ip.segments()[0] & 0xffc0) == 0xfe80
+            }
+        }
+    });
+    let local_name = host.ends_with(".local");
+    if !(private_ip || local_name) {
+        return Err("Remote-only mode only accepts a private LAN IP or .local hostname".into());
+    }
+
+    Ok(parsed.origin().ascii_serialization())
+}
+
 /// Probe the application's health endpoint, not just an open port. A different
 /// local service can occupy port 3000 and return HTTP 200; require the explicit
 /// Auto Torque response marker before allowing the window to navigate.
@@ -184,6 +223,27 @@ pub fn run() {
                     .path()
                     .resource_dir()
                     .map_err(|error| format!("resource_dir: {error}"))?;
+
+                // REMOTE-ONLY MUST BE CHECKED BEFORE creating app-data files,
+                // copying the SQLite seed, or starting the local Next server.
+                // If the variable is present but invalid, fail closed instead
+                // of silently falling back to a separate local database.
+                if let Ok(raw_remote_url) = std::env::var("AUTO_TORQUE_REMOTE_URL") {
+                    if !raw_remote_url.trim().is_empty() {
+                        let remote_origin = validate_remote_lan_origin(&raw_remote_url)
+                            .map_err(|error| {
+                                format!("Remote-only startup rejected: {error}")
+                            })?;
+                        let window = app
+                            .get_webview_window("main")
+                            .ok_or_else(|| "Main window is unavailable for remote-only mode".to_string())?;
+                        window
+                            .navigate(remote_origin.parse().map_err(|_| "Remote LAN origin could not be parsed".to_string())?)
+                            .map_err(|error| format!("Could not navigate to remote Auto Torque host: {error}"))?;
+                        return Ok(());
+                    }
+                }
+
                 let data_dir = app
                     .path()
                     .app_data_dir()
