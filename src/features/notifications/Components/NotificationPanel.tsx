@@ -174,7 +174,14 @@ export function NotificationPanel() {
                     className="flex w-full cursor-pointer gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50"
                     onClick={() => handleClickNotification(n.id, n.entityUrl, n.read)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleClickNotification(n.id, n.entityUrl, n.read)
+                      // The notification row contains its own delete/confirm
+                      // buttons. Only activate the row itself from the keyboard,
+                      // never when a nested control receives Enter or Space.
+                      if (e.target !== e.currentTarget) return
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        void handleClickNotification(n.id, n.entityUrl, n.read)
+                      }
                     }}
                   >
                     <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted">
