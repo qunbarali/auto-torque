@@ -44,8 +44,8 @@ fn has_valid_lan_origin_list(origins: &str) -> bool {
 
         let authority = remainder.split('/').next().unwrap_or("");
         if authority.is_empty()
-            || authority.chars().any(char::is_whitespace)
-            || authority.contains(['@', '*', '?', '#'])
+            || authority.chars().any(|character| character.is_whitespace())
+            || ['@', '*', '?', '#'].iter().any(|character| authority.contains(*character))
         {
             return false;
         }
