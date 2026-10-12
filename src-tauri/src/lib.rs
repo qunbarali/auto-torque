@@ -77,11 +77,10 @@ fn validate_remote_lan_origin(value: &str) -> Result<String, String> {
     let private_ip = host.parse::<std::net::IpAddr>().ok().is_some_and(|address| {
         match address {
             std::net::IpAddr::V4(ip) => {
-                ip.is_private() || ip.is_loopback() || ip.is_link_local()
+                ip.is_private() || ip.is_link_local()
             }
             std::net::IpAddr::V6(ip) => {
-                ip.is_loopback()
-                    || (ip.segments()[0] & 0xfe00) == 0xfc00
+                (ip.segments()[0] & 0xfe00) == 0xfc00
                     || (ip.segments()[0] & 0xffc0) == 0xfe80
             }
         }
