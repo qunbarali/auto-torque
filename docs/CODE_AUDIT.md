@@ -70,4 +70,3 @@ No GitHub Actions workflow was started during this pass. CI is configured for ma
 6. Verify backup/restore, organization isolation, failed integration credentials, and permission-denied paths.
 7. Test opt-in LAN host mode on two physical devices on a private Wi-Fi network; verify the client uses the host database and that local-only mode remains loopback-bound.
 8. Review the resulting logs and build artifacts before merging.
-7. Review the resulting logs and build artifacts before merging.
