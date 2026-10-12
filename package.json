@@ -26,7 +26,8 @@
     "postinstall": "prisma generate",
     "db:baseline": "node scripts/generate-sqlite-baseline.mjs",
     "audit:sqlite": "node scripts/audit-sqlite.mjs",
-    "db:check": "npm run audit:sqlite && prisma validate"
+    "db:check": "npm run audit:sqlite && prisma validate",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@aws-sdk/client-ses": "^3.1045.0",
