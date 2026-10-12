@@ -26,6 +26,7 @@ This report records the concrete issues found and changes made during the curren
 | Notification read/delete controls | Local state changed before the backend confirmed the action; failures could make notifications look read/deleted when they were not. | Await server actions, update local state only on success, and report errors. |
 | Notification keyboard behavior | Pressing Enter on a nested notification control could bubble to the row and trigger navigation. | Restrict row keyboard activation to events originating on the row itself and support Enter/Space. |
 | Desktop documentation | Build instructions repeated the build/preparation steps even though Tauri's `beforeBuildCommand` already runs them. Packaged-startup troubleshooting was incomplete. | Corrected the build sequence and documented the runtime log. |
+| Multi-device local access | Packaged desktop instances each used loopback and their own SQLite file; same credentials alone did not synchronize records. | Added opt-in LAN-host mode with exact-origin allowlisting, a fail-closed empty-origin check, helper tests, and setup instructions. This shares one host database; it is not peer-to-peer replication. |
 | Project documentation | The README was effectively empty and there was no end-user guide. | Added a project README and a user/admin guide. |
 
 ## Button-to-action trace performed in this pass
@@ -50,11 +51,12 @@ The connected GitHub inspection tool allowed source changes and file-level revie
 - `npm install` dependency resolution on a clean machine.
 - `npm run typecheck`.
 - `npm run lint` / `npm run check`.
-- `npm test`, including the new public-auth rate-limit regression test.
+- `npm test`, including the new public-auth rate-limit and LAN-origin parser tests.
 - `npm run db:check`.
 - `npm run build`.
 - `npm run tauri:build`, Rust compilation, and launch of the packaged Windows application.
 - End-to-end browser tests for every button across every feature page, role, and error state.
+- A two-device LAN test covering firewall reachability, sign-in from the client origin, WebSocket-dependent features, uploads, and shared record persistence.
 
 No GitHub Actions workflow was started during this pass. CI is configured for manual dispatch only. `main` was not changed.
 
@@ -66,4 +68,6 @@ No GitHub Actions workflow was started during this pass. CI is configured for ma
 4. Add Playwright or equivalent end-to-end tests that exercise every create/edit/delete/export/share/send button and assert both UI feedback and persisted backend state.
 5. Build and launch the Tauri package on Windows; test startup with a fresh data directory and with an existing database.
 6. Verify backup/restore, organization isolation, failed integration credentials, and permission-denied paths.
+7. Test opt-in LAN host mode on two physical devices on a private Wi-Fi network; verify the client uses the host database and that local-only mode remains loopback-bound.
+8. Review the resulting logs and build artifacts before merging.
 7. Review the resulting logs and build artifacts before merging.
