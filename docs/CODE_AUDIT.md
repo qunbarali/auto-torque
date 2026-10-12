@@ -26,7 +26,7 @@ This report records the concrete issues found and changes made during the curren
 | Notification read/delete controls | Local state changed before the backend confirmed the action; failures could make notifications look read/deleted when they were not. | Await server actions, update local state only on success, and report errors. |
 | Notification keyboard behavior | Pressing Enter on a nested notification control could bubble to the row and trigger navigation. | Restrict row keyboard activation to events originating on the row itself and support Enter/Space. |
 | Desktop documentation | Build instructions repeated the build/preparation steps even though Tauri's `beforeBuildCommand` already runs them. Packaged-startup troubleshooting was incomplete. | Corrected the build sequence and documented the runtime log. |
-| Multi-device local access | Packaged desktop instances each used loopback and their own SQLite file; same credentials alone did not synchronize records. | Added opt-in LAN-host mode with exact-origin allowlisting, a fail-closed empty-origin check, helper tests, and setup instructions. This shares one host database; it is not peer-to-peer replication. |
+| Multi-device local access | Packaged desktop instances each used loopback and their own SQLite file; same credentials alone did not synchronize records. | Added opt-in LAN-host mode with exact-origin allowlisting, a fail-closed exact-origin validation check, helper tests, and setup instructions. This shares one host database; it is not peer-to-peer replication. |
 | Project documentation | The README was effectively empty and there was no end-user guide. | Added a project README and a user/admin guide. |
 
 ## Button-to-action trace performed in this pass
