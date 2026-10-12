@@ -228,19 +228,17 @@ pub fn run() {
                 // If the variable is present but invalid, fail closed instead
                 // of silently falling back to a separate local database.
                 if let Ok(raw_remote_url) = std::env::var("AUTO_TORQUE_REMOTE_URL") {
-                    if !raw_remote_url.trim().is_empty() {
-                        let remote_origin = validate_remote_lan_origin(&raw_remote_url)
-                            .map_err(|error| {
-                                format!("Remote-only startup rejected: {error}")
-                            })?;
-                        let window = app
-                            .get_webview_window("main")
-                            .ok_or_else(|| "Main window is unavailable for remote-only mode".to_string())?;
-                        window
-                            .navigate(remote_origin.parse().map_err(|_| "Remote LAN origin could not be parsed".to_string())?)
-                            .map_err(|error| format!("Could not navigate to remote Auto Torque host: {error}"))?;
-                        return Ok(());
-                    }
+                    let remote_origin = validate_remote_lan_origin(&raw_remote_url)
+                        .map_err(|error| {
+                            format!("Remote-only startup rejected: {error}")
+                        })?;
+                    let window = app
+                        .get_webview_window("main")
+                        .ok_or_else(|| "Main window is unavailable for remote-only mode".to_string())?;
+                    window
+                        .navigate(remote_origin.parse().map_err(|_| "Remote LAN origin could not be parsed".to_string())?)
+                        .map_err(|error| format!("Could not navigate to remote Auto Torque host: {error}"))?;
+                    return Ok(());
                 }
 
                 let data_dir = app
