@@ -40,14 +40,15 @@ const demoBlockedPrefixes = [
 const defaultConfig = { limit: 30, windowMs: 60_000 }
 
 function getRequestIp(request: Request): string | null {
-  // Same precedence as lib/rate-limit.ts: Cloudflare's header cannot be forged
-  // by clients on proxied traffic; the first x-forwarded-for entry can.
-  return (
-    request.headers.get('cf-connecting-ip') ||
-    request.headers.get('x-real-ip') ||
-    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    null
-  )
+  // Trust Cloudflare's address header only when every request is guaranteed to
+  // pass through Cloudflare and direct origin access is blocked. Never use
+  // x-forwarded-for here: clients can supply it themselves.
+  const trustedCloudflareIp =
+    process.env.TRUST_CF_CONNECTING_IP === 'true'
+      ? request.headers.get('cf-connecting-ip')
+      : null
+
+  return trustedCloudflareIp || request.headers.get('x-real-ip') || null
 }
 
 async function POST(request: Request) {
