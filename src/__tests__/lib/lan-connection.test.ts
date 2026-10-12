@@ -27,6 +27,7 @@ describe('normalizeLanHostAddress', () => {
 
   it('rejects malformed or credential-bearing URLs', () => {
     expect(normalizeLanHostAddress('http://user:pass@192.168.1.20:3000')).toBeNull()
+    expect(normalizeLanHostAddress('http://@192.168.1.20:3000')).toBeNull()
     expect(normalizeLanHostAddress('http://192.168.1.20:3000/settings')).toBeNull()
     expect(normalizeLanHostAddress('http://192.168.1.20:3000/?next=/')).toBeNull()
     expect(normalizeLanHostAddress('javascript:alert(1)')).toBeNull()
