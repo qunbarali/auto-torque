@@ -45,11 +45,13 @@ The native window opens and loads the same app you see in the browser at `http:/
 
 ## Production build
 
-The production flow is fully wired for the SQLite + Tauri 2 architecture:
+The production flow is wired for the SQLite + Tauri 2 architecture. Run:
 
-1. `npm run build` creates the Next.js standalone server.
-2. `npm run tauri:prepare` copies the standalone runtime, creates a schema seed, and packages the Node executable used for the current build target as a Tauri sidecar.
-3. `npm run tauri:build` bundles the app, server, SQLite seed, and Node sidecar.
+```bash
+npm run tauri:build
+```
+
+Tauri invokes the configured `beforeBuildCommand`, which runs `npm run build` and then `npm run tauri:prepare` before bundling the app. Do not run those three commands manually in sequence unless you intentionally want to repeat the build/preparation work.
 
 The packaged app keeps its SQLite database and uploads in the OS application-data directory, not inside the read-only Tauri resources.
 
@@ -67,6 +69,7 @@ Default capabilities are defined in `src-tauri/capabilities/default.json`. Only 
 
 ## Troubleshooting
 
-- **Window stays blank** – make sure `next dev` is reachable at `http://localhost:3000` and that no firewall is blocking it.
+- **Development window stays blank** – make sure `next dev` is reachable at `http://localhost:3000` and that no firewall is blocking it.
+- **Packaged window stays blank or exits during startup** – inspect `runtime.log` in the Tauri application-data directory. It records the bundled resource/data paths, sidecar output, database initialization errors, and HTTP readiness failures. Confirm the package contains `runtime/server.js`, its static assets, the SQLite seed, and the matching Node sidecar.
 - **Rust version too old** – update with `rustup update`.
 - **Missing system libraries (Linux)** – install the packages listed in the [Tauri Linux prerequisites](https://v2.tauri.app/start/prerequisites/#linux).
