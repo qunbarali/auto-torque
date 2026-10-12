@@ -55,6 +55,24 @@ Tauri invokes the configured `beforeBuildCommand`, which runs `npm run build` an
 
 The packaged app keeps its SQLite database and uploads in the OS application-data directory, not inside the read-only Tauri resources.
 
+## Optional same-Wi-Fi host mode
+
+The packaged desktop app is loopback-only by default. For a second device to use the same records, start one desktop installation as the LAN host and connect other devices to it in a browser. This shares one server/database; it does not replicate separate SQLite databases.
+
+On Windows, reserve the host's private IPv4 address in the router, then launch the packaged executable from PowerShell with exact origin configuration:
+
+```powershell
+$env:AUTO_TORQUE_LAN_HOST = "true"
+$env:AUTO_TORQUE_LAN_ORIGINS = "http://192.168.1.20:3000"
+Start-Process "C:\Path\To\Auto Torque.exe"
+```
+
+Replace the sample IP and executable path. The host process must inherit these variables; the Rust desktop launcher does not read `.env`. The server binds to `0.0.0.0` only when LAN mode is explicitly enabled and refuses to start in that mode if the origin list is empty. `AUTO_TORQUE_LAN_ORIGINS` is a comma-separated list of exact HTTP(S) origins; wildcard entries, paths, and malformed origins are ignored.
+
+Allow TCP port 3000 through the host firewall only on a trusted **Private** network profile. On the second device, open the configured origin in a browser and sign in with the existing account. Keep the host running and back up its database and uploaded files.
+
+**Security note:** LAN mode uses HTTP in this setup. Do not use it on public/guest Wi-Fi or an untrusted network because traffic is not encrypted. Use a properly configured HTTPS deployment for untrusted networks or sensitive production access. See [the user guide](USER_GUIDE.md#12-two-devices-on-the-same-wi-fi-shared-local-data) for the full setup and troubleshooting checklist.
+
 ## Icons
 
 The packaged application uses the Auto Torque gear/wrench branding in PNG, ICO and ICNS formats. `scripts/prepare-tauri-runtime.mjs` also prepares the platform-specific Node sidecar required by Tauri 2 production builds.
