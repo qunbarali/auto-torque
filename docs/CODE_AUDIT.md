@@ -60,6 +60,14 @@ The connected GitHub inspection tool allowed source changes and file-level revie
 
 No GitHub Actions workflow was started during this pass. CI is configured for manual dispatch only. `main` was not changed.
 
+## LAN secondary-device workflow (updated)
+
+The Settings → LAN devices page can prepare and save a QR code or copy a connection address. The sign-in page's “Login as secondary device” panel accepts that address or an imported QR image and navigates to the main host's sign-in origin. The QR encodes only the LAN origin; it is not a password, pairing secret, or authenticated device token. The user still signs in through Better Auth on the host.
+
+This keeps all application data access on the host's SQLite-backed Next.js server when the secondary device uses a browser. It is **not** a native remote-only Tauri mode: launching a separate packaged desktop instance still initializes its own local runtime/database. Do not describe that desktop instance as database-free until startup can choose remote-client mode before local database initialization.
+
+The host must be running, both devices must be on the same trusted Wi-Fi, and the host firewall must allow the configured port. HTTP LAN mode does not encrypt traffic. A secure future pairing flow should use a short-lived, one-time host-approved token, explicit approval/revocation per device, and secure transport; do not turn the connection QR into a permanent bearer credential.
+
 ## Recommended release gate
 
 1. Install dependencies from a clean checkout and commit a reviewed npm lockfile.
