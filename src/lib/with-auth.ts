@@ -32,8 +32,16 @@ type WithAuthOptions<T = unknown> = {
 async function getRequestMeta() {
   try {
     const h = await headers()
-    const forwarded = h.get('x-forwarded-for')
-    const ip = forwarded?.split(',')[0]?.trim() || h.get('x-real-ip') || null
+    const cloudflareIp =
+      process.env.TRUST_CF_CONNECTING_IP === 'true'
+        ? h.get('cf-connecting-ip')?.trim()
+        : null
+    const realIp = h.get('x-real-ip')?.trim()
+    // A trusted reverse proxy appends the address it observed to the end of
+    // X-Forwarded-For. Never take the first entry, which is caller-controlled.
+    const forwardedChain = h.get('x-forwarded-for')?.split(',') ?? []
+    const forwardedIp = forwardedChain.at(-1)?.trim()
+    const ip = cloudflareIp || realIp || forwardedIp || null
     const userAgent = h.get('user-agent') || null
     return { ip, userAgent }
   } catch {
