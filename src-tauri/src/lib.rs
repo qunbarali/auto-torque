@@ -101,8 +101,11 @@ fn validate_remote_lan_origin(value: &str) -> Result<String, String> {
 /// Resolve explicit remote-only configuration before any local data initialization.
 /// The command-line option is useful for launchers and avoids relying on a shell's
 /// inherited environment; if repeated, reject it instead of guessing which host wins.
-fn remote_url_argument() -> Result<Option<String>, String> {
-    let mut args = std::env::args().skip(1);
+fn parse_remote_url_arguments<I>(arguments: I) -> Result<Option<String>, String>
+where
+    I: IntoIterator<Item = String>,
+{
+    let mut args = arguments.into_iter();
     let mut remote = None;
 
     while let Some(arg) = args.next() {
@@ -122,6 +125,10 @@ fn remote_url_argument() -> Result<Option<String>, String> {
     }
 
     Ok(remote)
+}
+
+fn remote_url_argument() -> Result<Option<String>, String> {
+    parse_remote_url_arguments(std::env::args().skip(1))
 }
 
 /// Probe the application's health endpoint, not just an open port. A different
@@ -450,11 +457,27 @@ mod remote_mode_tests {
     use super::validate_remote_lan_origin;
 
     #[test]
-    fn remote_url_argument_parser_is_available_without_local_data_setup() {
-        // The actual process argument list is intentionally not mutated in a
-        // unit test. URL validation remains covered below; this guards that the
-        // resolver is part of the startup module at compile time.
-        assert!(remote_url_argument().is_ok());
+    fn remote_url_argument_parser_accepts_both_supported_forms() {
+        assert_eq!(
+            super::parse_remote_url_arguments(vec!["--remote-url".into(), "http://192.168.1.20:3000".into()]).unwrap(),
+            Some("http://192.168.1.20:3000".into())
+        );
+        assert_eq!(
+            super::parse_remote_url_arguments(vec!["--remote-url=https://garage-pc.local".into()]).unwrap(),
+            Some("https://garage-pc.local".into())
+        );
+        assert_eq!(super::parse_remote_url_arguments(vec!["--help".into()]).unwrap(), None);
+    }
+
+    #[test]
+    fn remote_url_argument_parser_rejects_missing_or_repeated_values() {
+        assert!(super::parse_remote_url_arguments(vec!["--remote-url".into()]).is_err());
+        assert!(super::parse_remote_url_arguments(vec![
+            "--remote-url".into(),
+            "http://192.168.1.20:3000".into(),
+            "--remote-url".into(),
+            "http://192.168.1.21:3000".into()
+        ]).is_err());
     }
 
     #[test]
