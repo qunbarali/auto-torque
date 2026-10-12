@@ -22,6 +22,11 @@ if (-not $uri.IsAbsoluteUri -or $uri.Scheme -notin @("http", "https") -or $uri.U
   throw "Use an HTTP(S) origin only, without credentials, path, query, or fragment."
 }
 
+$rawAuthority = ($HostUrl.Trim() -replace '^[a-zA-Z][a-zA-Z0-9+.-]*://', '').Split([char[]]@('/', '?', '#'), 2)[0]
+if ($rawAuthority.Contains('@')) {
+  throw "Credentials are not allowed in the host URL."
+}
+
 $hostName = $uri.DnsSafeHost.TrimStart([char[]]@('[')).TrimEnd([char[]]@(']'))
 $isLocalName = $hostName.EndsWith(".local", [System.StringComparison]::OrdinalIgnoreCase)
 $ip = $null
