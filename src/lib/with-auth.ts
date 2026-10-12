@@ -40,7 +40,7 @@ async function getRequestMeta() {
     // A trusted reverse proxy appends the address it observed to the end of
     // X-Forwarded-For. Never take the first entry, which is caller-controlled.
     const forwardedChain = h.get('x-forwarded-for')?.split(',') ?? []
-    const forwardedIp = forwardedChain.at(-1)?.trim()
+    const forwardedIp = forwardedChain[forwardedChain.length - 1]?.trim()
     const ip = cloudflareIp || realIp || forwardedIp || null
     const userAgent = h.get('user-agent') || null
     return { ip, userAgent }
