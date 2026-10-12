@@ -64,7 +64,13 @@ fn validate_remote_lan_origin(value: &str) -> Result<String, String> {
     if parsed.scheme() != "http" && parsed.scheme() != "https" {
         return Err("Remote-only mode accepts only HTTP(S) URLs".into());
     }
-    if !parsed.username().is_empty()
+    let raw_authority = value
+        .trim()
+        .split_once("://")
+        .map(|(_, rest)| rest.split(['/', '?', '#']).next().unwrap_or_default())
+        .unwrap_or_default();
+    if raw_authority.contains('@')
+        || !parsed.username().is_empty()
         || parsed.password().is_some()
         || parsed.query().is_some()
         || parsed.fragment().is_some()
@@ -441,6 +447,7 @@ mod remote_mode_tests {
     #[test]
     fn rejects_credentials_paths_queries_and_fragments() {
         assert!(validate_remote_lan_origin("http://user:pass@192.168.1.20:3000").is_err());
+        assert!(validate_remote_lan_origin("http://@192.168.1.20:3000").is_err());
         assert!(validate_remote_lan_origin("http://192.168.1.20:3000/settings").is_err());
         assert!(validate_remote_lan_origin("http://192.168.1.20:3000/?next=/").is_err());
         assert!(validate_remote_lan_origin("http://192.168.1.20:3000/#token").is_err());
