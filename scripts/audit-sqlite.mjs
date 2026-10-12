@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises'
+import { readFile, stat } from 'node:fs/promises'
 import { glob } from 'node:fs/promises'
 
 const patterns = [
@@ -34,11 +34,16 @@ const failures = []
 for (const file of [...new Set(files)]) {
   if (forbiddenFiles.some((p) => p.test(file)) || file === 'scripts/audit-sqlite.mjs') continue
   try {
+    const info = await stat(file)
+    if (!info.isFile()) continue
+
     const source = await readFile(file, 'utf8')
     for (const [name, pattern] of patterns) {
       if (pattern.test(source)) failures.push(`${file}: ${name}`)
     }
-  } catch {}
+  } catch (error) {
+    failures.push(`${file}: could not inspect file (${error instanceof Error ? error.message : String(error)})`)
+  }
 }
 
 const pkg = JSON.parse(await readFile('package.json', 'utf8'))
