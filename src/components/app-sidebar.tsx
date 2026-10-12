@@ -319,21 +319,40 @@ export function AppSidebar({
   const activeOrg = organizations.find((o) => o.id === activeOrgId) || organizations[0]
 
   const handleSwitchOrg = async (orgId: string) => {
-    await switchOrganization(orgId)
-    router.refresh()
+    try {
+      const result = await switchOrganization(orgId)
+      if (!result.success) {
+        toast.error(result.error || t('sidebar.organizationSwitchFailed'))
+        return
+      }
+      router.refresh()
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : t('sidebar.organizationSwitchFailed')
+      )
+    }
   }
 
   const handleCreateOrg = async () => {
-    if (!newOrgName.trim()) return
+    const name = newOrgName.trim()
+    if (!name || creatingOrg) return
+
     setCreatingOrg(true)
-    const result = await createNewOrganization({ name: newOrgName.trim() })
-    setCreatingOrg(false)
-    if (result.success) {
-      setShowCreateOrg(false)
-      setNewOrgName('')
-      router.refresh()
-    } else if (result.error) {
-      toast.error(result.error)
+    try {
+      const result = await createNewOrganization({ name })
+      if (result.success) {
+        setShowCreateOrg(false)
+        setNewOrgName('')
+        router.refresh()
+      } else {
+        toast.error(result.error || t('sidebar.organizationCreateFailed'))
+      }
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : t('sidebar.organizationCreateFailed')
+      )
+    } finally {
+      setCreatingOrg(false)
     }
   }
 
@@ -347,8 +366,14 @@ export function AppSidebar({
     : '?'
 
   const handleSignOut = async () => {
-    await signOut()
-    router.push('/auth/sign-in')
+    try {
+      await signOut()
+      router.push('/auth/sign-in')
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : t('sidebar.signOutFailed')
+      )
+    }
   }
 
   const dashboardActive = pathname === '/'
