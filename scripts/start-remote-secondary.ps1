@@ -45,12 +45,11 @@ if (-not ($isLocalName -or $isPrivateIp)) {
   throw "HostUrl must use a private LAN IP address or a .local hostname."
 }
 
-$env:AUTO_TORQUE_REMOTE_URL = $uri.GetLeftPart([System.UriPartial]::Authority)
 $env:AUTO_TORQUE_LAN_HOST = "false"
 $env:AUTO_TORQUE_LAN_ORIGINS = ""
-Write-Host "Starting Auto Torque in REMOTE-ONLY mode: $env:AUTO_TORQUE_REMOTE_URL"
+Write-Host "Starting Auto Torque in REMOTE-ONLY mode: $($uri.GetLeftPart([System.UriPartial]::Authority))"
 Write-Host "Local SQLite initialization and the local server are skipped by this build."
-Start-Process -FilePath $AppPath
+Start-Process -FilePath $AppPath -ArgumentList @("--remote-url", $uri.GetLeftPart([System.UriPartial]::Authority))
 
 $isLocalName = $hostName.EndsWith(".local", [System.StringComparison]::OrdinalIgnoreCase)
 $ip = $null
@@ -74,9 +73,8 @@ if (-not ($isLocalName -or $isPrivateIp)) {
   throw "HostUrl must use a private LAN IP address or a .local hostname."
 }
 
-$env:AUTO_TORQUE_REMOTE_URL = $uri.GetLeftPart([System.UriPartial]::Authority)
 $env:AUTO_TORQUE_LAN_HOST = "false"
 $env:AUTO_TORQUE_LAN_ORIGINS = ""
-Write-Host "Starting Auto Torque in REMOTE-ONLY mode: $env:AUTO_TORQUE_REMOTE_URL"
+Write-Host "Starting Auto Torque in REMOTE-ONLY mode: $($uri.GetLeftPart([System.UriPartial]::Authority))"
 Write-Host "Local SQLite initialization and the local server are skipped by this build."
-Start-Process -FilePath $AppPath
+Start-Process -FilePath $AppPath -ArgumentList @("--remote-url", $uri.GetLeftPart([System.UriPartial]::Authority))
