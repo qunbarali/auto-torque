@@ -228,6 +228,34 @@ pub fn run() {
                 append_runtime_log(&log_path, &format!("Database file: {}", database.display()));
                 append_runtime_log(&log_path, &format!("Starting bundled server: {}", server.display()));
 
+                // LAN hosting is opt-in. The default remains loopback-only so
+                // an ordinary desktop install is not exposed to the network.
+                let lan_host_enabled = std::env::var("AUTO_TORQUE_LAN_HOST")
+                    .map(|value| value.eq_ignore_ascii_case("true"))
+                    .unwrap_or(false);
+                let lan_origins =
+                    std::env::var("AUTO_TORQUE_LAN_ORIGINS").unwrap_or_default();
+
+                if lan_host_enabled && lan_origins.trim().is_empty() {
+                    let message = "LAN hosting was requested, but AUTO_TORQUE_LAN_ORIGINS is empty. Configure exact origins such as http://192.168.1.20:3000 before enabling LAN hosting.".to_string();
+                    append_runtime_log(&log_path, &message);
+                    return Err(message.into());
+                }
+
+                let bind_host = if lan_host_enabled {
+                    "0.0.0.0"
+                } else {
+                    "127.0.0.1"
+                };
+                append_runtime_log(
+                    &log_path,
+                    &format!(
+                        "Network mode: {}; bind host: {bind_host}; configured LAN origins: {}",
+                        if lan_host_enabled { "LAN host" } else { "local-only" },
+                        if lan_host_enabled { lan_origins.as_str() } else { "(disabled)" }
+                    ),
+                );
+
                 let sidecar = app
                     .shell()
                     .sidecar("auto-torque-node")
@@ -239,8 +267,10 @@ pub fn run() {
                     .args([server.to_string_lossy().as_ref()])
                     .env("NODE_ENV", "production")
                     .env("NEXT_TELEMETRY_DISABLED", "1")
-                    .env("HOSTNAME", "127.0.0.1")
+                    .env("HOSTNAME", bind_host)
                     .env("PORT", "3000")
+                    .env("AUTO_TORQUE_LAN_HOST", if lan_host_enabled { "true" } else { "false" })
+                    .env("AUTO_TORQUE_LAN_ORIGINS", lan_origins)
                     .env("DATABASE_URL", database_url)
                     .env("AUTO_TORQUE_DATA_DIR", data_dir.to_string_lossy().to_string())
                     .env(
