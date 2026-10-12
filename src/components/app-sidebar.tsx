@@ -322,7 +322,7 @@ export function AppSidebar({
     try {
       const result = await switchOrganization(orgId)
       if (!result.success) {
-        toast.error(result.error || t('sidebar.organizationSwitchFailed'))
+        toast.error(result.error || 'Could not switch organization. Please try again.')
         return
       }
       router.refresh()
@@ -345,7 +345,7 @@ export function AppSidebar({
         setNewOrgName('')
         router.refresh()
       } else {
-        toast.error(result.error || t('sidebar.organizationCreateFailed'))
+        toast.error(result.error || 'Could not create organization. Please try again.')
       }
     } catch (error) {
       toast.error(
@@ -371,7 +371,7 @@ export function AppSidebar({
       router.push('/auth/sign-in')
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : t('sidebar.signOutFailed')
+        error instanceof Error ? error.message : 'Could not sign out. Please try again.'
       )
     }
   }
