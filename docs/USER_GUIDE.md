@@ -170,7 +170,7 @@ A web user account and a technician/mobile identity may be related but are not n
 
 ### Native desktop app: remote-only secondary mode (Windows)
 
-A packaged desktop build can now start as a remote-only client. In this mode it checks `AUTO_TORQUE_REMOTE_URL` **before** creating the application-data directory, copying a SQLite seed, or launching the local Next.js server. It navigates the native window to the main device's server. If the variable is present but invalid, startup fails closed rather than silently creating a local database.
+A packaged desktop build can start as a remote-only client. It accepts `--remote-url <origin>` as a launch argument or `AUTO_TORQUE_REMOTE_URL` as an environment setting, and validates that value **before** creating the application-data directory, copying a SQLite seed, or launching the local Next.js server. It navigates the native window to the main device's server. Invalid or conflicting configuration fails closed rather than silently creating a local database.
 
 1. First configure and start the main device using the host steps above. Use the saved QR code to read the exact host address, such as `http://192.168.1.20:3000`.
 2. On the secondary Windows computer, open PowerShell. If you have a project checkout, you can use the helper script:
@@ -182,10 +182,9 @@ A packaged desktop build can now start as a remote-only client. In this mode it 
    Or launch the packaged executable directly:
    
    ```powershell
-   $env:AUTO_TORQUE_REMOTE_URL = "http://192.168.1.20:3000"
    $env:AUTO_TORQUE_LAN_HOST = "false"
    $env:AUTO_TORQUE_LAN_ORIGINS = ""
-   Start-Process "C:\Path\To\Auto Torque.exe"
+   Start-Process "C:\Path\To\Auto Torque.exe" -ArgumentList @("--remote-url", "http://192.168.1.20:3000")
    ```
 
    Replace the sample URL and executable path. The URL must be a private LAN IPv4/IPv6 address or a `.local` hostname, with no path, query, fragment, or credentials. Do not use `localhost` or a loopback address on a different device; those point back to the secondary device itself.
