@@ -98,6 +98,32 @@ fn validate_remote_lan_origin(value: &str) -> Result<String, String> {
     Ok(parsed.origin().ascii_serialization())
 }
 
+/// Resolve explicit remote-only configuration before any local data initialization.
+/// The command-line option is useful for launchers and avoids relying on a shell's
+/// inherited environment; if repeated, reject it instead of guessing which host wins.
+fn remote_url_argument() -> Result<Option<String>, String> {
+    let mut args = std::env::args().skip(1);
+    let mut remote = None;
+
+    while let Some(arg) = args.next() {
+        let value = if arg == "--remote-url" {
+            Some(args.next().ok_or_else(|| "--remote-url requires a URL".to_string())?)
+        } else if let Some(value) = arg.strip_prefix("--remote-url=") {
+            Some(value.to_string())
+        } else {
+            None
+        };
+
+        if let Some(value) = value {
+            if remote.replace(value).is_some() {
+                return Err("--remote-url may be supplied only once".into());
+            }
+        }
+    }
+
+    Ok(remote)
+}
+
 /// Probe the application's health endpoint, not just an open port. A different
 /// local service can occupy port 3000 and return HTTP 200; require the explicit
 /// Auto Torque response marker before allowing the window to navigate.
@@ -232,11 +258,20 @@ pub fn run() {
                 // copying the SQLite seed, or starting the local Next server.
                 // If the variable is present but invalid, fail closed instead
                 // of silently falling back to a separate local database.
-                if let Ok(raw_remote_url) = std::env::var("AUTO_TORQUE_REMOTE_URL") {
+                let remote_argument = remote_url_argument()
+                    .map_err(|error| format!("Remote-only startup rejected: {error}"))?;
+                let remote_environment = std::env::var("AUTO_TORQUE_REMOTE_URL").ok();
+                let raw_remote_url = match (remote_argument, remote_environment) {
+                    (Some(argument), Some(environment)) if argument.trim() != environment.trim() => {
+                        return Err("Remote-only startup rejected: --remote-url conflicts with AUTO_TORQUE_REMOTE_URL".into());
+                    }
+                    (Some(argument), _) => Some(argument),
+                    (None, environment) => environment,
+                };
+
+                if let Some(raw_remote_url) = raw_remote_url {
                     let remote_origin = validate_remote_lan_origin(&raw_remote_url)
-                        .map_err(|error| {
-                            format!("Remote-only startup rejected: {error}")
-                        })?;
+                        .map_err(|error| format!("Remote-only startup rejected: {error}"))?;
                     let window = app
                         .get_webview_window("main")
                         .ok_or_else(|| "Main window is unavailable for remote-only mode".to_string())?;
@@ -413,6 +448,14 @@ pub fn run() {
 #[cfg(test)]
 mod remote_mode_tests {
     use super::validate_remote_lan_origin;
+
+    #[test]
+    fn remote_url_argument_parser_is_available_without_local_data_setup() {
+        // The actual process argument list is intentionally not mutated in a
+        // unit test. URL validation remains covered below; this guards that the
+        // resolver is part of the startup module at compile time.
+        assert!(remote_url_argument().is_ok());
+    }
 
     #[test]
     fn accepts_private_lan_origins() {
