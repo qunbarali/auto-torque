@@ -407,3 +407,37 @@ pub fn run() {
         .run(tauri::generate_context!())
         .expect("error while running Auto Torque");
 }
+
+#[cfg(test)]
+mod remote_mode_tests {
+    use super::validate_remote_lan_origin;
+
+    #[test]
+    fn accepts_private_lan_origins() {
+        assert_eq!(
+            validate_remote_lan_origin("http://192.168.1.20:3000").unwrap(),
+            "http://192.168.1.20:3000"
+        );
+        assert_eq!(
+            validate_remote_lan_origin("https://garage-pc.local/").unwrap(),
+            "https://garage-pc.local"
+        );
+    }
+
+    #[test]
+    fn rejects_public_hosts_and_loopback_for_remote_devices() {
+        assert!(validate_remote_lan_origin("https://example.com").is_err());
+        assert!(validate_remote_lan_origin("http://8.8.8.8:3000").is_err());
+        assert!(validate_remote_lan_origin("http://127.0.0.1:3000").is_err());
+        assert!(validate_remote_lan_origin("http://localhost:3000").is_err());
+    }
+
+    #[test]
+    fn rejects_credentials_paths_queries_and_fragments() {
+        assert!(validate_remote_lan_origin("http://user:pass@192.168.1.20:3000").is_err());
+        assert!(validate_remote_lan_origin("http://192.168.1.20:3000/settings").is_err());
+        assert!(validate_remote_lan_origin("http://192.168.1.20:3000/?next=/").is_err());
+        assert!(validate_remote_lan_origin("http://192.168.1.20:3000/#token").is_err());
+        assert!(validate_remote_lan_origin("javascript:alert(1)").is_err());
+    }
+}
