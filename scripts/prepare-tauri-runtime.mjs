@@ -28,6 +28,8 @@ await rm(seed, { force: true })
 execFileSync(process.platform === 'win32' ? 'npx.cmd' : 'npx', ['prisma', 'db', 'push', '--skip-generate'], {
   cwd: root,
   stdio: 'inherit',
+  // Windows cannot execute .cmd files directly through execFileSync without a shell.
+  shell: process.platform === 'win32',
   env: { ...process.env, DATABASE_URL: `file:${seed.replace(/\\/g, '/')}` },
 })
 
