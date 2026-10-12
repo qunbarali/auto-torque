@@ -20,6 +20,7 @@ export function parseTrustedLanOrigins(value: string | undefined): string[] {
         isHttp &&
         !url.username &&
         !url.password &&
+        !url.hostname.includes('*') &&
         hasOnlyOriginPath &&
         !url.search &&
         !url.hash
