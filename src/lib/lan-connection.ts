@@ -9,8 +9,10 @@ export function normalizeLanHostAddress(value: string): string | null {
 
   try {
     const url = new URL(candidate)
+    const rawAuthority = candidate.split('://', 2)[1]?.split(/[/?#]/, 1)[0] ?? ''
     if (
       !['http:', 'https:'].includes(url.protocol) ||
+      rawAuthority.includes('@') ||
       url.username ||
       url.password ||
       (url.pathname !== '/' && url.pathname !== '') ||
