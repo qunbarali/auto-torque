@@ -188,7 +188,7 @@ A packaged desktop build can now start as a remote-only client. In this mode it 
    Start-Process "C:\Path\To\Auto Torque.exe"
    ```
 
-   Replace the sample URL and executable path. The URL must be a private LAN IP address or a `.local` hostname, with no path, query, fragment, or credentials.
+   Replace the sample URL and executable path. The URL must be a private LAN IPv4/IPv6 address or a `.local` hostname, with no path, query, fragment, or credentials. Do not use `localhost` or a loopback address on a different device; those point back to the secondary device itself.
 3. Sign in normally in the native window. All application reads and writes go to the main device's server/database. The secondary app does not start its own Next server or initialize/copy its SQLite database in remote-only mode.
 4. To return to standalone local mode, close the app and launch it without `AUTO_TORQUE_REMOTE_URL`. Only do this if you actually want an independent local installation; it will initialize/use a local database.
 
