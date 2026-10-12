@@ -35,6 +35,7 @@ import {
   Wrench,
   BellRing,
   LifeBuoy,
+  Wifi,
 } from 'lucide-react'
 
 type SettingsNavItem = {
@@ -49,6 +50,8 @@ type SettingsNavItem = {
    * already, since the flag is only ever true in cloud mode.
    */
   supportOnly?: boolean
+  label?: string
+  description?: string
 }
 
 type SettingsCategory = {
@@ -113,6 +116,7 @@ const settingsCategories: SettingsCategory[] = [
     key: 'system',
     items: [
       { key: 'data', href: '/settings/data', icon: Database },
+      { key: 'lanDevices', href: '/settings/lan-devices', icon: Wifi, label: 'LAN devices', description: 'Connect secondary devices over Wi-Fi' },
       { key: 'install', href: '/settings/install', icon: Download },
       { key: 'license', href: '/settings/license', icon: Key, selfHostedOnly: true },
       { key: 'about', href: '/settings/about', icon: Info },
@@ -157,7 +161,7 @@ export function SettingsNav({
             if (visibleItems.length === 0) return null
             return visibleItems.map((item) => (
               <SelectItem key={item.href} value={item.href}>
-                {t(`nav.items.${item.key}.title`)}
+                {item.label ?? t(`nav.items.${item.key}.title`)}
               </SelectItem>
             ))
           })}
@@ -206,7 +210,7 @@ export function SettingsNav({
                         )}
                       </div>
                       <p className="hidden truncate text-xs text-muted-foreground lg:block">
-                        {t(`nav.items.${item.key}.description`)}
+                        {item.description ?? t(`nav.items.${item.key}.description`)}
                       </p>
                     </div>
                   </Link>
