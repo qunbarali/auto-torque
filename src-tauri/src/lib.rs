@@ -73,20 +73,19 @@ fn validate_remote_lan_origin(value: &str) -> Result<String, String> {
         return Err("Remote-only URL must be an origin only, without credentials, path, query, or fragment".into());
     }
 
-    let host = parsed.host_str().unwrap_or_default().to_ascii_lowercase();
-    let private_ip = host.parse::<std::net::IpAddr>().ok().is_some_and(|address| {
-        match address {
-            std::net::IpAddr::V4(ip) => {
-                ip.is_private() || ip.is_link_local()
-            }
-            std::net::IpAddr::V6(ip) => {
-                (ip.segments()[0] & 0xfe00) == 0xfc00
-                    || (ip.segments()[0] & 0xffc0) == 0xfe80
-            }
+    let host = parsed.host().ok_or_else(|| "Remote-only URL has no host".to_string())?;
+    let private_ip = match host {
+        url::Host::Ipv4(ip) => ip.is_private() || ip.is_link_local(),
+        url::Host::Ipv6(ip) => {
+            (ip.segments()[0] & 0xfe00) == 0xfc00
+                || (ip.segments()[0] & 0xffc0) == 0xfe80
         }
-    });
-    let local_name = host.ends_with(".local");
-    if !(private_ip || local_name) {
+        url::Host::Domain(name) => {
+            let name = name.to_ascii_lowercase();
+            name.ends_with(".local")
+        }
+    };
+    if !private_ip {
         return Err("Remote-only mode only accepts a private LAN IP or .local hostname".into());
     }
 
@@ -419,6 +418,14 @@ mod remote_mode_tests {
             validate_remote_lan_origin("https://garage-pc.local/").unwrap(),
             "https://garage-pc.local"
         );
+        assert_eq!(
+            validate_remote_lan_origin("http://[fd12:3456::20]:3000").unwrap(),
+            "http://[fd12:3456::20]:3000"
+        );
+        assert_eq!(
+            validate_remote_lan_origin("http://[fe80::20]:3000").unwrap(),
+            "http://[fe80::20]:3000"
+        );
     }
 
     #[test]
@@ -427,6 +434,8 @@ mod remote_mode_tests {
         assert!(validate_remote_lan_origin("http://8.8.8.8:3000").is_err());
         assert!(validate_remote_lan_origin("http://127.0.0.1:3000").is_err());
         assert!(validate_remote_lan_origin("http://localhost:3000").is_err());
+        assert!(validate_remote_lan_origin("http://[::1]:3000").is_err());
+        assert!(validate_remote_lan_origin("http://[2001:4860:4860::8888]:3000").is_err());
     }
 
     #[test]
