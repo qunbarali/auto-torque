@@ -160,7 +160,7 @@ For a packaged Tauri desktop host, LAN mode is opt-in and loopback-only remains 
    ```powershell
    $env:AUTO_TORQUE_LAN_HOST = "true"
    $env:AUTO_TORQUE_LAN_ORIGINS = "http://192.168.1.20:3000"
-   Start-Process "C:\\Path\\To\\Auto Torque.exe"
+   Start-Process "C:\Path\To\Auto Torque.exe"
    ```
 
    The server refuses to start in LAN mode if the explicit origin list is empty. Origins are exact HTTP(S) origins, comma-separated; wildcards and paths are not accepted. These variables must be present in the environment that launches the packaged Tauri executable; setting them only in a `.env` file does not configure the Rust host process.
