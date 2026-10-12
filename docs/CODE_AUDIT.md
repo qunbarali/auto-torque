@@ -76,5 +76,6 @@ The host must be running, both devices must be on the same trusted Wi-Fi, and th
 4. Add Playwright or equivalent end-to-end tests that exercise every create/edit/delete/export/share/send button and assert both UI feedback and persisted backend state.
 5. Build and launch the Tauri package on Windows; test startup with a fresh data directory and with an existing database.
 6. Verify backup/restore, organization isolation, failed integration credentials, and permission-denied paths.
-7. Test opt-in LAN host mode on two physical devices on a private Wi-Fi network; verify the client uses the host database and that local-only mode remains loopback-bound.
-8. Review the resulting logs and build artifacts before merging.
+7. Test opt-in LAN host mode and native remote-only mode on two physical devices on a private Wi-Fi network; verify the remote-only client does not create an app-data SQLite database or start a local sidecar, and verify local-only mode remains loopback-bound.
+8. Verify invalid and empty `AUTO_TORQUE_REMOTE_URL` values fail closed before database initialization; verify the host-offline behavior and recovery after reconnect.
+9. Review the resulting logs and build artifacts before merging.
