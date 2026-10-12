@@ -9,7 +9,7 @@ This report records the concrete issues found and changes made during the curren
 
 | Area | Finding | Change |
 |---|---|---|
-| Tauri production startup | A listening TCP port alone does not prove the bundled Next.js app is ready; production UI could open before HTTP readiness. | Added an HTTP readiness probe, a bounded startup wait, sidecar diagnostics, database/resource-path logging, and a persistent runtime log. |
+| Tauri production startup | A listening TCP port alone does not prove the bundled Next.js app is ready; a different local service on port 3000 could return HTTP 200 and fool a status-only probe. | Probe the app health endpoint, require an explicit Auto Torque response header, check the database-backed health status, and retain a bounded wait plus startup/runtime logging. |
 | Tauri frontend configuration | The window configuration could force a URL in a way that obscured the intended production frontend target. | Made the production frontend target explicit and removed the per-window URL override. |
 | Tauri permissions | The frontend had broad shell-spawn permission even though Rust launches the bundled server. | Removed the unnecessary frontend spawn permission. |
 | Windows build scripts | Prisma CLI invocation via `execFileSync` can fail on Windows when the executable resolves to a `.cmd` shim. | Set the shell option on Windows in the two Prisma preparation scripts. |
