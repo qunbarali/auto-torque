@@ -65,10 +65,14 @@ async function POST(request: Request) {
   }
 
   const config = strictPrefixes.find((p) => pathname.startsWith(p.prefix)) ?? defaultConfig
-  const limited = rateLimit(request, config)
+
+  // These routes are public and must be rate-limited by network identity, not
+  // by an arbitrary Authorization header. Otherwise a caller can send a new
+  // fake Bearer token on every request and obtain a fresh rate-limit bucket.
+  const limited = rateLimit(request, { ...config, anonymous: true })
   if (limited) return limited
 
-  const isAuthAttempt = authAuditPrefixes.some((p) => pathname.startsWith(p))
+  const isAuthAttempt = authAuditPrefixes.some((p) => pathname.startsWith(p.prefix))
 
   if (isAuthAttempt) {
     // Clone body before better-auth consumes it
