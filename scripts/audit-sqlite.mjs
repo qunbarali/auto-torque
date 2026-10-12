@@ -31,11 +31,13 @@ for (const root of roots) {
 for (const file of ['package.json', 'prisma.config.ts', 'Dockerfile', 'docker-compose.yml', 'init-db.sh']) files.push(file)
 
 const failures = []
+let scannedFiles = 0
 for (const file of [...new Set(files)]) {
   if (forbiddenFiles.some((p) => p.test(file)) || file === 'scripts/audit-sqlite.mjs') continue
   try {
     const info = await stat(file)
     if (!info.isFile()) continue
+    scannedFiles += 1
 
     const source = await readFile(file, 'utf8')
     for (const [name, pattern] of patterns) {
@@ -62,4 +64,4 @@ if (failures.length) {
   console.error([...new Set(failures)].join('\n'))
   process.exit(1)
 }
-console.log(`SQLite-only audit passed (${files.length} files/config entries scanned).`)
+console.log(`SQLite-only audit passed (${scannedFiles} source files scanned).`)
