@@ -138,7 +138,7 @@ If your deployment uses the technician mobile app/API:
 
 A web user account and a technician/mobile identity may be related but are not necessarily interchangeable. Follow the setup flow supplied by your administrator.
 
-## 13. Two devices on the same Wi-Fi (shared local data)
+## 12. Two devices on the same Wi-Fi (shared local data)
 
 **Important:** Auto Torque's packaged desktop app normally keeps its SQLite database on that computer and listens only on loopback. Two separate installations do not automatically synchronize their databases just because they use the same username and password.
 
@@ -157,7 +157,7 @@ To use the same live customer, vehicle, job, invoice, and inventory records from
    Start-Process "C:\Path\To\Auto Torque.exe"
    ```
 
-   Keep the PowerShell window open if you are launching the app from it. The environment variables must be inherited by the desktop executable; putting them only in `.env` does not configure the Rust desktop host. LAN mode is disabled by default. If the origin list is empty, the app refuses to start the LAN server.
+   Keep the PowerShell window open if you are launching the app from it. The environment variables must be inherited by the desktop executable; putting them only in `.env` does not configure the Rust desktop host. LAN mode is disabled by default. If the origin list contains no valid exact HTTP(S) origin, the app refuses to start the LAN server.
 
 5. If Windows asks about network access, allow it only on the Private network. Do not disable the firewall entirely.
 
