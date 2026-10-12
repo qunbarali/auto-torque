@@ -146,6 +146,31 @@ Build on the target operating system when possible; native Node modules and Taur
 
 The packaged server binds to loopback; do not expose it to the public network.
 
+## Same-Wi-Fi access (one shared database)
+
+Auto Torque does not replicate/merge two independent SQLite databases over Wi-Fi. For two devices to work on the same records, run one Auto Torque server as the **LAN host** and connect the other device to that host in its browser. Both devices then use the same server and database; there is no background database-copy process.
+
+For a packaged Tauri desktop host, LAN mode is opt-in and loopback-only remains the default.
+
+1. Connect both devices to the same trusted private Wi-Fi network. Do not use a guest/public network.
+2. Find the host computer's private IPv4 address (for example, `192.168.1.20`) with `ipconfig` on Windows. Reserve that address in the router so it does not change.
+3. Allow inbound TCP port 3000 on the host firewall for the **Private** network profile only. Do not create a public-network firewall rule or expose this port to the internet.
+4. Launch the packaged desktop host with these environment variables set in the launching process (PowerShell example; replace the address with the host's actual reserved IPv4 address):
+
+   ```powershell
+   $env:AUTO_TORQUE_LAN_HOST = "true"
+   $env:AUTO_TORQUE_LAN_ORIGINS = "http://192.168.1.20:3000"
+   Start-Process "C:\\Path\\To\\Auto Torque.exe"
+   ```
+
+   The server refuses to start in LAN mode if the explicit origin list is empty. Origins are exact HTTP(S) origins, comma-separated; wildcards and paths are not accepted. These variables must be present in the environment that launches the packaged Tauri executable; setting them only in a `.env` file does not configure the Rust host process.
+5. On the second device, open `http://192.168.1.20:3000` in a browser and sign in using the existing account. Do not install another standalone copy expecting its separate local database to sync.
+6. Create a test customer on one device, then refresh/search for it on the other. Only begin real use after this round-trip test succeeds.
+
+**Security and limitations:** LAN mode binds the server to network interfaces, so the host's firewall and Wi-Fi trust boundary matter. HTTP does not encrypt traffic; use only on a trusted network and use HTTPS for sensitive or untrusted networks. Keep the host computer awake and Auto Torque running while clients need access. If the host stops or leaves Wi-Fi, other devices cannot reach the shared records. Make backups of the host database and uploaded files. Never copy the live SQLite database between devices as a sync method.
+
+For a Node/web development server, `npm run dev` already binds to `0.0.0.0`; set `AUTO_TORQUE_LAN_ORIGINS` to the exact client origin in the environment before starting it. The same shared-server model applies.
+
 ## Quality checks
 
 Run these locally before proposing a release:
