@@ -29,6 +29,32 @@ fn append_runtime_log(path: &Path, message: &str) {
     }
 }
 
+/// Require at least one exact HTTP(S) origin before opening the server to LAN
+/// interfaces. This is intentionally a small fail-closed syntax check; the
+/// application performs stricter URL parsing before trusting the origin.
+fn has_valid_lan_origin_list(origins: &str) -> bool {
+    origins.split(',').any(|entry| {
+        let origin = entry.trim();
+        let Some((scheme, remainder)) = origin.split_once("://") else {
+            return false;
+        };
+        if scheme != "http" && scheme != "https" {
+            return false;
+        }
+
+        let authority = remainder.split('/').next().unwrap_or("");
+        if authority.is_empty()
+            || authority.chars().any(char::is_whitespace)
+            || authority.contains(['@', '*', '?', '#'])
+        {
+            return false;
+        }
+
+        let suffix = &remainder[authority.len()..];
+        suffix.is_empty() || suffix == "/"
+    })
+}
+
 /// Probe the application's health endpoint, not just an open port. A different
 /// local service can occupy port 3000 and return HTTP 200; require the explicit
 /// Auto Torque response marker before allowing the window to navigate.
@@ -236,8 +262,8 @@ pub fn run() {
                 let lan_origins =
                     std::env::var("AUTO_TORQUE_LAN_ORIGINS").unwrap_or_default();
 
-                if lan_host_enabled && lan_origins.trim().is_empty() {
-                    let message = "LAN hosting was requested, but AUTO_TORQUE_LAN_ORIGINS is empty. Configure exact origins such as http://192.168.1.20:3000 before enabling LAN hosting.".to_string();
+                if lan_host_enabled && !has_valid_lan_origin_list(&lan_origins) {
+                    let message = "LAN hosting was requested, but AUTO_TORQUE_LAN_ORIGINS has no valid exact HTTP(S) origin. Configure a value such as http://192.168.1.20:3000 before enabling LAN hosting.".to_string();
                     append_runtime_log(&log_path, &message);
                     return Err(message.into());
                 }
