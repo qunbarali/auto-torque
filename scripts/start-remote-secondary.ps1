@@ -52,6 +52,7 @@ if (-not ($isLocalName -or $isPrivateIp)) {
 }
 
 $remoteOrigin = $uri.GetLeftPart([System.UriPartial]::Authority)
+[System.Environment]::SetEnvironmentVariable("AUTO_TORQUE_REMOTE_URL", $null, "Process")
 $env:AUTO_TORQUE_LAN_HOST = "false"
 $env:AUTO_TORQUE_LAN_ORIGINS = ""
 
