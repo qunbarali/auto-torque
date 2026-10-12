@@ -138,46 +138,52 @@ If your deployment uses the technician mobile app/API:
 
 A web user account and a technician/mobile identity may be related but are not necessarily interchangeable. Follow the setup flow supplied by your administrator.
 
-## 12. Two devices on the same Wi-Fi (shared local data)
+## 12. Two devices on the same Wi-Fi (one shared database)
 
-**Important:** Auto Torque's packaged desktop app normally keeps its SQLite database on that computer and listens only on loopback. Two separate installations do not automatically synchronize their databases just because they use the same username and password.
+**The main device is the database owner.** The second device must connect to the main device's running Auto Torque server; it must not start an independent desktop server and expect the two SQLite databases to merge. Same username/password on two separate local installations does not synchronize their databases.
 
-To use the same live customer, vehicle, job, invoice, and inventory records from two devices, configure one device as the LAN host and use the other device's browser as a client. Both devices then connect to one server and one database. This is shared access, not peer-to-peer database replication.
+### Set up the main device
 
-### Set up the host (Windows packaged desktop)
-
-1. Connect the host and client to the same trusted private Wi-Fi network.
-2. On the host, open Command Prompt or PowerShell and run `ipconfig`. Find the active Wi-Fi adapter's IPv4 address, for example `192.168.1.20`. Prefer a DHCP reservation in your router so the address stays stable.
-3. In Windows Defender Firewall, allow inbound TCP port 3000 for the **Private** network profile only. Do not allow it on Public networks and do not forward the port from the router to the internet.
-4. Close Auto Torque if it is already running. Open PowerShell and launch the packaged application with LAN mode enabled. Replace the example path and IP address with your actual values:
-
+1. Connect both devices to the same trusted private Wi-Fi network.
+2. On the main Windows computer, run `ipconfig` and find the active Wi-Fi adapter's IPv4 address, for example `192.168.1.20`. A DHCP reservation in the router helps keep this address stable.
+3. In Windows Defender Firewall, allow inbound TCP port 3000 on the **Private** profile only. Do not disable the firewall or forward port 3000 from your router to the internet.
+4. Close Auto Torque if it is running. Launch the packaged desktop app from PowerShell with LAN hosting enabled. Replace the example address and executable path:
+   
    ```powershell
    $env:AUTO_TORQUE_LAN_HOST = "true"
    $env:AUTO_TORQUE_LAN_ORIGINS = "http://192.168.1.20:3000"
    Start-Process "C:\Path\To\Auto Torque.exe"
    ```
 
-   Keep the PowerShell window open if you are launching the app from it. The environment variables must be inherited by the desktop executable; putting them only in `.env` does not configure the Rust desktop host. LAN mode is disabled by default. If the origin list contains no valid exact HTTP(S) origin, the app refuses to start the LAN server.
+   The environment variables must be inherited by the desktop executable; putting them only in `.env` does not configure the Rust desktop host. LAN mode remains disabled by default. If no valid exact origin is configured, the server refuses to start in LAN mode.
 
-5. If Windows asks about network access, allow it only on the Private network. Do not disable the firewall entirely.
+5. On the main device, open **Settings → LAN devices**. Enter the main device's LAN address (not `localhost`), select **Prepare QR code**, and save the QR image or copy the connection code. The address must match the origin configured for LAN access.
+6. Keep the main computer awake and Auto Torque running whenever the second device needs access.
 
-### Connect the second device
+### Connect the secondary device
 
-1. Open a browser on the second device while it is on the same Wi-Fi.
-2. Enter the host address, for example `http://192.168.1.20:3000`.
-3. Sign in with the existing Auto Torque credentials. Since both devices reach the same host database, do not create a separate account just to make data appear.
-4. Create a clearly named test customer on one device, then refresh and search for it on the other. Verify an edit as well before entering production records.
-5. Use the host machine's app for host-side maintenance and backups. Keep it awake and Auto Torque running while the second device needs access.
+1. Connect the second device to the same private Wi-Fi.
+2. Open the Auto Torque sign-in page served by the main device, or use **Login as secondary device** on a sign-in page.
+3. Either enter the connection code/address (for example `http://192.168.1.20:3000`) or import the QR image saved from Settings. The app opens the main device's sign-in page.
+4. Sign in with your normal Auto Torque account on the host. The QR code is only a connection address; it is not a password or a login token.
+5. Create a clearly named test customer on one device, then find it on the other. Edit the test record from the secondary device and confirm the change is visible on the main device before entering production data.
 
-### Security, availability, and troubleshooting
+Use a browser on the secondary device for this shared-host workflow. A separate packaged desktop instance starts its own local runtime/database by default and is not yet a native remote-only client mode. Do not use that second local instance if the requirement is that no independent SQLite database be created on the secondary device.
 
-- Use this only on a trusted private network. LAN mode makes the server reachable from the network; HTTP does not encrypt passwords or customer data in transit. Use HTTPS for untrusted networks or sensitive production deployments.
-- The explicit origin list must match the address and port clients actually use, e.g. `http://192.168.1.20:3000`. If the host IP changes, update the origin setting and restart the app.
-- If the client cannot connect, check that both devices are on the same Wi-Fi (not an isolated guest network), the host address is correct, Auto Torque is running, and the Private-profile firewall rule permits TCP 3000.
-- If the page loads but sign-in is rejected, check `AUTO_TORQUE_LAN_ORIGINS` for the exact origin, including the port.
-- If the host shuts down, other devices cannot access the application. Back up the host database and uploaded files regularly.
-- Do not copy a live SQLite file back and forth or run two separate app databases expecting them to merge. There is no automatic merge/replication engine; separate databases can diverge.
-- To return to local-only mode, close the app and launch it without `AUTO_TORQUE_LAN_HOST=true`. The packaged app then binds to `127.0.0.1` again.
+### What is shared, and what is not
+
+- Customer, vehicle, work order, inventory, quote, invoice, and other server-backed records are stored in the main device's SQLite database because both devices use the same server.
+- This is live shared access, not database replication or offline synchronization. If Wi-Fi drops or the main device is off, the secondary device cannot use the records until the connection returns.
+- The secondary browser does not receive a copy of the SQLite database. Browser session cookies and ordinary browser cache may still exist on the secondary device.
+- Keep regular backups of the main device's database. A failure of the main device affects all connected clients.
+
+### Security and troubleshooting
+
+- Use only a trusted private Wi-Fi network. Do not use a guest/public network and do not expose the host port to the internet.
+- HTTP LAN traffic is not encrypted. Do not use it on an untrusted network; HTTPS with a certificate trusted by the secondary device is preferable when available.
+- If the secondary device cannot connect, confirm both devices are on the same subnet, the host app is still running, Windows Firewall allows TCP 3000 on Private, and the URL uses the host's current LAN address.
+- If sign-in reports an invalid origin, make sure `AUTO_TORQUE_LAN_ORIGINS` contains the exact origin the secondary device uses, including scheme and port, and restart the main app.
+- If records do not appear on both devices, verify the secondary browser's address bar shows the main device's LAN URL, not `localhost` or another installation.
 
 ## 13. Reports, dashboard, and reminders
 
