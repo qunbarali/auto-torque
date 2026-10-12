@@ -1,6 +1,6 @@
 use std::{
     fs::OpenOptions,
-    io::{BufRead, BufReader, Read, Write},
+    io::{BufRead, BufReader, Write},
     net::{SocketAddr, TcpStream},
     path::Path,
     thread,
