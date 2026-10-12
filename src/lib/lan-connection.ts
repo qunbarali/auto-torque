@@ -21,7 +21,7 @@ export function normalizeLanHostAddress(value: string): string | null {
     const host = url.hostname.toLowerCase()
     const isLocalhost = host === 'localhost' || host === '127.0.0.1' || host === '[::1]'
     const isLocalName = host.endsWith('.local')
-    const octets = host.split('.').map((part) => /^\\d+$/.test(part) ? Number(part) : -1)
+    const octets = host.split('.').map((part) => /^\d+$/.test(part) ? Number(part) : -1)
     const validIpv4 = octets.length === 4 && octets.every((part) => part >= 0 && part <= 255)
     const isPrivateIpv4 = validIpv4 && (
       octets[0] === 10 ||
