@@ -15,6 +15,7 @@ This report records the concrete issues found and changes made during the curren
 | Windows build scripts | Prisma CLI invocation via `execFileSync` can fail on Windows when the executable resolves to a `.cmd` shim. | Set the shell option on Windows in the two Prisma preparation scripts. |
 | TypeScript verification | There was no explicit project typecheck script in package scripts/CI. | Added `npm run typecheck` and a CI step. |
 | CI dependency install | CI used `npm ci` without a committed npm lockfile. | Switched to `npm install --no-audit --no-fund` and removed lockfile-dependent npm cache setup. A committed lockfile remains recommended for reproducible releases. |
+| CI workflow cost control | The test workflow ran automatically for pull requests targeting `main`, consuming Actions minutes without an explicit request. | Changed CI to `workflow_dispatch` only; this edit does not start a workflow. |
 | SQLite audit script | File-inspection errors were swallowed, allowing an incomplete scan to appear successful. | Report inspection failures and count files actually scanned. |
 | Authentication audit metadata | Failed-login audit IP parsing trusted `cf-connecting-ip` without checking the proxy trust setting and used a caller-controllable first `x-forwarded-for` entry. | Trust Cloudflare's header only when `TRUST_CF_CONNECTING_IP=true`; avoid taking the first forwarded entry. |
 | Public authentication rate limiting | The shared limiter could key requests by an arbitrary Bearer token. An unauthenticated caller could vary fake tokens to obtain fresh buckets on sign-in and other public auth endpoints. | Force auth-route rate limits to use the anonymous/network-identity bucket rather than caller-supplied Authorization headers. Added regression tests for the limiter options and early 429 return. |
@@ -55,7 +56,7 @@ The connected GitHub inspection tool allowed source changes and file-level revie
 - `npm run tauri:build`, Rust compilation, and launch of the packaged Windows application.
 - End-to-end browser tests for every button across every feature page, role, and error state.
 
-The CI workflow was not triggered. `main` was not changed.
+No GitHub Actions workflow was started during this pass. CI is configured for manual dispatch only. `main` was not changed.
 
 ## Recommended release gate
 
