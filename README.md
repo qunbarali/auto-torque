@@ -17,6 +17,7 @@ The application is built with Next.js, React, TypeScript, Prisma, and SQLite. It
 - [Troubleshooting](#troubleshooting)
 - [Security and data handling](#security-and-data-handling)
 - [User guide](docs/USER_GUIDE.md)
+- [Code audit findings and verification gaps](docs/CODE_AUDIT.md)
 
 ## Features
 
