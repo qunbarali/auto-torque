@@ -1,5 +1,6 @@
-import { getAppDataDir } from '@/lib/app-data-path'
 'use server'
+
+import { getAppDataDir } from '@/lib/app-data-path'
 
 import { db } from '@/lib/db'
 import { unlink } from 'fs/promises'
