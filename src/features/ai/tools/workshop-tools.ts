@@ -125,7 +125,7 @@ export function validateSql(sql: string): { valid: boolean; error?: string } {
   }
 
   // SQLite file-access/extension functions must never be available to the AI.
-  if (\b(?:readfile|writefile|load_extension|eval|fts3_tokenizer)\s*\(/i.test(trimmed)) {
+  if (/\b(?:readfile|writefile|load_extension|eval|fts3_tokenizer)\s*\(/i.test(trimmed)) {
     return { valid: false, error: 'Unsafe SQLite function call is not allowed.' }
   }
 
