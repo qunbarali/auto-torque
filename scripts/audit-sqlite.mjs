@@ -35,7 +35,7 @@ let scannedFiles = 0
 for (const file of [...new Set(files)]) {
   // Node's glob returns platform-native separators. Normalize before exclusions
   // so Windows does not scan this audit's own forbidden-SQL pattern literals.
-  const normalizedFile = file.replaceAll('\\\\', '/')
+  const normalizedFile = file.replaceAll('\\', '/')
   if (forbiddenFiles.some((p) => p.test(normalizedFile)) || normalizedFile === 'scripts/audit-sqlite.mjs') continue
   try {
     const info = await stat(file)
