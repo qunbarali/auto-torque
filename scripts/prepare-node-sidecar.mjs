@@ -1,15 +1,24 @@
-import { cp, mkdir, readdir, rm, chmod } from 'node:fs/promises'
+import { cp, mkdir, readdir, rm, chmod, writeFile } from 'node:fs/promises'
 import { execFileSync } from 'node:child_process'
 import path from 'node:path'
 
 const root = process.cwd()
 const binaries = path.join(root, 'src-tauri', 'binaries')
+const runtime = path.join(root, 'src-tauri', 'runtime')
 const targetTriple = process.env.TAURI_ENV_TARGET_TRIPLE || detectHostTriple()
 const suffix = process.platform === 'win32' ? '.exe' : ''
 const nodeName = `auto-torque-node-${targetTriple}${suffix}`
 const nodeTarget = path.join(binaries, nodeName)
 
 await mkdir(binaries, { recursive: true })
+// Tauri validates configured resource globs even during `tauri dev`. The
+// production runtime is created by `tauri:prepare`; provide a harmless file
+// so the `runtime/**` resource glob also resolves on a clean development tree.
+await mkdir(runtime, { recursive: true })
+const runtimeEntries = await readdir(runtime)
+if (runtimeEntries.length === 0) {
+  await writeFile(path.join(runtime, '.dev-resource-placeholder'), 'Generated for Tauri development resource validation.\n', 'utf8')
+}
 for (const entry of await readdir(binaries)) {
   if (entry.startsWith('auto-torque-node-') && entry !== nodeName) {
     await rm(path.join(binaries, entry), { force: true })
