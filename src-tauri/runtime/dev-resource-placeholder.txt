@@ -1,0 +1,2 @@
+This placeholder keeps the configured Tauri runtime/** resource glob valid during development.
+Production packaging replaces this directory with the generated standalone Next.js runtime.
