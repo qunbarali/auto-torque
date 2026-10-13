@@ -21,6 +21,10 @@ await mkdir(path.join(runtime, '.next'), { recursive: true })
 await cp(staticDir, path.join(runtime, '.next', 'static'), { recursive: true })
 if (existsSync(publicDir)) await cp(publicDir, path.join(runtime, 'public'), { recursive: true })
 
+// Include translation JSON files referenced by runtime API routes at runtime.
+const messagesDir = path.join(root, 'messages')
+if (existsSync(messagesDir)) await cp(messagesDir, path.join(runtime, 'messages'), { recursive: true })
+
 // Build a schema-only SQLite template. The packaged desktop app copies this
 // into the user's writable app-data directory on first launch.
 const seed = path.join(runtime, 'seed.sqlite')
