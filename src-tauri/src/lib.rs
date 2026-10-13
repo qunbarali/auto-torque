@@ -1,3 +1,4 @@
+#[cfg(not(debug_assertions))]
 use std::{
     fs::OpenOptions,
     io::{BufRead, BufReader, Write},
@@ -7,14 +8,18 @@ use std::{
     time::Duration,
 };
 
+#[cfg(not(debug_assertions))]
 use tauri::Manager;
+#[cfg(not(debug_assertions))]
 use tauri_plugin_shell::{
     process::{CommandChild, CommandEvent},
     ShellExt,
 };
 
+#[cfg(not(debug_assertions))]
 struct NextServer(Option<CommandChild>);
 
+#[cfg(not(debug_assertions))]
 impl Drop for NextServer {
     fn drop(&mut self) {
         if let Some(child) = self.0.take() {
@@ -23,6 +28,7 @@ impl Drop for NextServer {
     }
 }
 
+#[cfg(not(debug_assertions))]
 fn append_runtime_log(path: &Path, message: &str) {
     if let Ok(mut file) = OpenOptions::new().create(true).append(true).open(path) {
         let _ = writeln!(file, "{message}");
@@ -32,6 +38,7 @@ fn append_runtime_log(path: &Path, message: &str) {
 /// Require at least one exact HTTP(S) origin before opening the server to LAN
 /// interfaces. This is intentionally a small fail-closed syntax check; the
 /// application performs stricter URL parsing before trusting the origin.
+#[cfg(not(debug_assertions))]
 fn has_valid_lan_origin_list(origins: &str) -> bool {
     origins.split(',').any(|entry| {
         let origin = entry.trim();
@@ -57,6 +64,7 @@ fn has_valid_lan_origin_list(origins: &str) -> bool {
 
 /// Validate a remote-only client target. It must be a private LAN origin,
 /// not a public host, URL with credentials, path, query, or fragment.
+#[cfg(any(not(debug_assertions), test))]
 fn validate_remote_lan_origin(value: &str) -> Result<String, String> {
     let parsed = url::Url::parse(value.trim())
         .map_err(|_| "AUTO_TORQUE_REMOTE_URL is not a valid URL".to_string())?;
@@ -101,6 +109,7 @@ fn validate_remote_lan_origin(value: &str) -> Result<String, String> {
 /// Resolve explicit remote-only configuration before any local data initialization.
 /// The command-line option is useful for launchers and avoids relying on a shell's
 /// inherited environment; if repeated, reject it instead of guessing which host wins.
+#[cfg(any(not(debug_assertions), test))]
 fn parse_remote_url_arguments<I>(arguments: I) -> Result<Option<String>, String>
 where
     I: IntoIterator<Item = String>,
@@ -127,6 +136,7 @@ where
     Ok(remote)
 }
 
+#[cfg(not(debug_assertions))]
 fn remote_url_argument() -> Result<Option<String>, String> {
     parse_remote_url_arguments(std::env::args().skip(1))
 }
@@ -134,6 +144,7 @@ fn remote_url_argument() -> Result<Option<String>, String> {
 /// Probe the application's health endpoint, not just an open port. A different
 /// local service can occupy port 3000 and return HTTP 200; require the explicit
 /// Auto Torque response marker before allowing the window to navigate.
+#[cfg(not(debug_assertions))]
 fn probe_http(port: u16) -> Result<Option<(u16, bool)>, String> {
     let address = SocketAddr::from(([127, 0, 0, 1], port));
     let mut stream = match TcpStream::connect_timeout(&address, Duration::from_millis(300)) {
@@ -196,6 +207,7 @@ fn probe_http(port: u16) -> Result<Option<(u16, bool)>, String> {
 
 /// Wait up to ~45 s for the bundled Next.js server. Require the expected app
 /// identity and a successful or redirect HTTP response before opening the UI.
+#[cfg(not(debug_assertions))]
 fn wait_for_server(port: u16, log_path: &Path) -> Result<(), String> {
     const MAX_ATTEMPTS: u32 = 450; // 450 * 100 ms = 45 s
     let mut last_status = None;
@@ -253,10 +265,10 @@ fn wait_for_server(port: u16, log_path: &Path) -> Result<(), String> {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
-        .setup(|app| {
+        .setup(|_app| {
             #[cfg(not(debug_assertions))]
             {
-                let resource_dir = app
+                let resource_dir = _app
                     .path()
                     .resource_dir()
                     .map_err(|error| format!("resource_dir: {error}"))?;
@@ -279,7 +291,7 @@ pub fn run() {
                 if let Some(raw_remote_url) = raw_remote_url {
                     let remote_origin = validate_remote_lan_origin(&raw_remote_url)
                         .map_err(|error| format!("Remote-only startup rejected: {error}"))?;
-                    let window = app
+                    let window = _app
                         .get_webview_window("main")
                         .ok_or_else(|| "Main window is unavailable for remote-only mode".to_string())?;
                     window
@@ -288,7 +300,7 @@ pub fn run() {
                     return Ok(());
                 }
 
-                let data_dir = app
+                let data_dir = _app
                     .path()
                     .app_data_dir()
                     .map_err(|error| format!("app_data_dir: {error}"))?;
@@ -386,7 +398,7 @@ pub fn run() {
                     ),
                 );
 
-                let sidecar = app
+                let sidecar = _app
                     .shell()
                     .sidecar("auto-torque-node")
                     .map_err(|error| {
@@ -443,7 +455,7 @@ pub fn run() {
                     return Err(error.into());
                 }
 
-                app.manage(NextServer(Some(child)));
+                _app.manage(NextServer(Some(child)));
             }
 
             Ok(())
