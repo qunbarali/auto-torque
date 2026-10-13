@@ -15,9 +15,10 @@ await mkdir(binaries, { recursive: true })
 // production runtime is created by `tauri:prepare`; provide a harmless file
 // so the `runtime/**` resource glob also resolves on a clean development tree.
 await mkdir(runtime, { recursive: true })
-const runtimeEntries = await readdir(runtime)
-if (runtimeEntries.length === 0) {
-  await writeFile(path.join(runtime, '.dev-resource-placeholder'), 'Generated for Tauri development resource validation.\n', 'utf8')
+// Tauri's globber may ignore dotfiles, so use a visible placeholder filename.
+// Keep it out of production: prepare-tauri-runtime.mjs recreates this directory.
+if (!runtimeEntriesContainServer(await readdir(runtime))) {
+  await writeFile(path.join(runtime, 'dev-resource-placeholder.txt'), 'Generated for Tauri development resource validation.\n', 'utf8')
 }
 for (const entry of await readdir(binaries)) {
   if (entry.startsWith('auto-torque-node-') && entry !== nodeName) {
@@ -28,6 +29,10 @@ await cp(process.execPath, nodeTarget)
 if (process.platform !== 'win32') await chmod(nodeTarget, 0o755)
 
 console.log(`Prepared Tauri Node sidecar: ${nodeTarget}`)
+
+function runtimeEntriesContainServer(entries) {
+  return entries.includes('server.js')
+}
 
 function detectHostTriple() {
   try {
