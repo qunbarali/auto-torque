@@ -7,7 +7,7 @@
     "dev": "next dev --webpack --hostname 0.0.0.0",
     "dev:turbo": "next dev --turbo --hostname 0.0.0.0",
     "build": "prisma generate && npm run audit:sqlite && next build",
-    "start": "prisma db push --skip-generate && next start",
+    "start": "prisma db push && next start",
     "lint": "biome lint .",
     "lint:fix": "biome lint . --write",
     "format": "biome format . --write",
