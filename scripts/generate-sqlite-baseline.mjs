@@ -9,6 +9,8 @@ const prisma = process.platform === 'win32' ? 'npx.cmd' : 'npx'
 const sql = execFileSync(prisma, ['migrate', 'diff', '--from-empty', '--to-schema', 'prisma/schema.prisma', '--script'], {
   cwd: root,
   encoding: 'utf8',
+  // Windows cannot execute .cmd files directly through execFileSync without a shell.
+  shell: process.platform === 'win32',
   stdio: ['ignore', 'pipe', 'inherit'],
 })
 await import('node:fs/promises').then(({ writeFile }) => writeFile(path.join(target, 'migration.sql'), sql))

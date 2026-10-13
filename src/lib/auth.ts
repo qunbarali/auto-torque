@@ -7,6 +7,7 @@ import { twoFactor } from 'better-auth/plugins/two-factor'
 import { db } from './db'
 import { logAudit } from './audit'
 import { isDemoMode } from './demo'
+import { parseTrustedLanOrigins } from './trusted-lan-origins'
 
 const baseURL = process.env.NEXT_PUBLIC_APP_URL
 const isProduction = baseURL?.startsWith('https://')
@@ -47,9 +48,14 @@ function devLanOrigin(): string[] {
   }
 }
 
+// LAN origins are opt-in and must be listed exactly by the administrator.
+ // Do not trust arbitrary private-network hosts or wildcard origins.
+const trustedLanOrigins = parseTrustedLanOrigins(process.env.AUTO_TORQUE_LAN_ORIGINS)
+
 const trustedOrigins = [
   ...(baseURL ? [baseURL] : []),
   ...(process.env.NODE_ENV === 'production' ? [] : EXPO_DEV_ORIGINS),
+  ...trustedLanOrigins,
 ]
 
 export const auth = betterAuth({

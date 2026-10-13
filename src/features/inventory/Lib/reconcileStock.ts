@@ -119,6 +119,7 @@ export async function reconcileInventoryForParts(
 
     // No row matched — unknown part, or one belonging to another organization.
     if (updated.length === 0) continue
+    const newQuantity = updated[0].quantity
 
     ledgerRows.push({
       inventoryPartId,

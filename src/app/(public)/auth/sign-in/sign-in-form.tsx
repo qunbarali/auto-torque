@@ -11,6 +11,8 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Fingerprint, Loader2, PlayCircle, XCircle } from 'lucide-react'
 import { AuthLogo } from '@/components/auth-logo'
+import { normalizeLanHostAddress } from '@/lib/lan-connection'
+import { Wifi, ImageUp } from 'lucide-react'
 
 const DEMO_EMAIL = 'demo@torqvoice.com'
 const DEMO_PASSWORD = 'demo'
@@ -29,6 +31,10 @@ function SignInFormInner({
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [passkeyLoading, setPasskeyLoading] = useState(false)
+  const [secondaryMode, setSecondaryMode] = useState(false)
+  const [secondaryCode, setSecondaryCode] = useState('')
+  const [secondaryError, setSecondaryError] = useState('')
+  const [secondaryBusy, setSecondaryBusy] = useState(false)
   const passwordRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -108,6 +114,36 @@ function SignInFormInner({
       setError(t('errors.passkeyFailed'))
     } finally {
       setPasskeyLoading(false)
+    }
+  }
+
+  const connectSecondary = (rawValue: string) => {
+    const address = normalizeLanHostAddress(rawValue)
+    if (!address) {
+      setSecondaryError('Enter a valid private LAN address, for example http://192.168.1.20:3000.')
+      return
+    }
+    setSecondaryError('')
+    // Redirect to the main device itself. Authentication and all data operations
+    // then happen on the host; this browser does not create a local data store.
+    window.location.assign(`${address}/auth/sign-in?secondary=1`)
+  }
+
+  const importSecondaryQr = async (file?: File) => {
+    if (!file) return
+    setSecondaryBusy(true)
+    setSecondaryError('')
+    try {
+      const { Html5Qrcode } = await import('html5-qrcode')
+      const reader = new Html5Qrcode('secondary-qr-reader')
+      const decoded = await reader.scanFile(file, false)
+      await reader.clear()
+      setSecondaryCode(decoded)
+      connectSecondary(decoded)
+    } catch {
+      setSecondaryError('Could not read that QR image. Import the saved Auto Torque LAN QR code or enter the connection code manually.')
+    } finally {
+      setSecondaryBusy(false)
     }
   }
 
@@ -229,6 +265,61 @@ function SignInFormInner({
         )}
         {t('passkey')}
       </Button>
+
+      <div className="mt-4">
+        <Button
+          type="button"
+          variant="ghost"
+          className="h-10 w-full"
+          onClick={() => {
+            setSecondaryMode((value) => !value)
+            setSecondaryError('')
+          }}
+        >
+          <Wifi className="mr-2 h-4 w-4" />
+          Login as secondary device
+        </Button>
+        {secondaryMode && (
+          <div className="mt-3 space-y-3 rounded-lg border p-4">
+            <p className="text-sm text-muted-foreground">
+              Connect to the main device on the same private Wi-Fi. The main device stores the data; this device opens its sign-in page.
+            </p>
+            <div className="space-y-2">
+              <Label htmlFor="secondary-connection-code">Connection code / main device address</Label>
+              <Input
+                id="secondary-connection-code"
+                value={secondaryCode}
+                onChange={(event) => setSecondaryCode(event.target.value)}
+                placeholder="http://192.168.1.20:3000"
+                autoCapitalize="none"
+                autoCorrect="off"
+              />
+              <Button type="button" className="w-full" onClick={() => connectSecondary(secondaryCode)}>
+                Connect to main device
+              </Button>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="secondary-qr-image">Or import saved QR image</Label>
+              <Input
+                id="secondary-qr-image"
+                type="file"
+                accept="image/*"
+                disabled={secondaryBusy}
+                onChange={(event) => {
+                  void importSecondaryQr(event.target.files?.[0])
+                  event.currentTarget.value = ''
+                }}
+              />
+              <div id="secondary-qr-reader" className="hidden" />
+              {secondaryBusy && <p className="text-xs text-muted-foreground">Reading QR image…</p>}
+            </div>
+            {secondaryError && <p role="alert" className="text-sm text-destructive">{secondaryError}</p>}
+            <p className="text-xs text-muted-foreground">
+              The QR code is a connection address, not a password or login token. You must still sign in on the main device. Use only a trusted private Wi-Fi network.
+            </p>
+          </div>
+        )}
+      </div>
 
       {!registrationDisabled && (
         <p className="mt-6 text-center text-sm text-muted-foreground">

@@ -4,9 +4,10 @@
   "version": "1.0.0",
   "identifier": "com.autotorque.app",
   "build": {
-    "beforeDevCommand": "npm run dev",
+    "beforeDevCommand": "node scripts/prepare-node-sidecar.mjs && npm run dev",
     "beforeBuildCommand": "npm run build && npm run tauri:prepare",
-    "devUrl": "http://localhost:3000"
+    "devUrl": "http://localhost:3000",
+    "frontendDist": "http://127.0.0.1:3000"
   },
   "app": {
     "windows": [
@@ -19,8 +20,7 @@
         "minHeight": 700,
         "resizable": true,
         "fullscreen": false,
-        "center": true,
-        "url": "http://127.0.0.1:3000"
+        "center": true
       }
     ],
     "security": {
@@ -38,7 +38,7 @@
       "icons/icon.ico",
       "icons/icon.icns"
     ],
-    "resources": ["runtime/**"],
+    "resources": ["runtime/*", "runtime/**/*"],
     "externalBin": ["binaries/auto-torque-node"],
     "category": "Business",
     "shortDescription": "Smart garage management",

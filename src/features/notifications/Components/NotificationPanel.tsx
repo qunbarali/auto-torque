@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl'
 import { formatDistanceToNow } from 'date-fns'
 import { Bell, FileText, ClipboardCheck, Receipt, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
@@ -57,18 +58,31 @@ export function NotificationPanel() {
     removeNotification,
   } = useNotificationStore()
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
-  const handleClickNotification = (id: string, entityUrl: string, read: boolean) => {
+  const handleClickNotification = async (id: string, entityUrl: string, read: boolean) => {
     if (pendingDeleteId) {
       setPendingDeleteId(null)
       return
     }
+
     if (!read) {
-      markRead(id)
-      markNotificationRead(id)
+      try {
+        const result = await markNotificationRead(id)
+        if (result.success) {
+          markRead(id)
+        } else {
+          toast.error(result.error || 'Could not mark notification as read.')
+        }
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : 'Could not mark notification as read.'
+        )
+      }
     }
+
     setPanelOpen(false)
-    setTimeout(() => {
+    window.setTimeout(() => {
       router.push(entityUrl)
     }, 300)
   }
@@ -78,11 +92,24 @@ export function NotificationPanel() {
     setPendingDeleteId(id)
   }
 
-  const handleConfirmDelete = (e: React.MouseEvent, id: string) => {
+  const handleConfirmDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation()
-    removeNotification(id)
-    deleteNotification(id)
-    setPendingDeleteId(null)
+    if (deletingId) return
+
+    setDeletingId(id)
+    try {
+      const result = await deleteNotification(id)
+      if (result.success) {
+        removeNotification(id)
+        setPendingDeleteId(null)
+      } else {
+        toast.error(result.error || 'Could not delete notification.')
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not delete notification.')
+    } finally {
+      setDeletingId(null)
+    }
   }
 
   const handleCancelDelete = (e: React.MouseEvent) => {
@@ -91,8 +118,16 @@ export function NotificationPanel() {
   }
 
   const handleMarkAllRead = async () => {
-    markAllRead()
-    markAllNotificationsRead()
+    try {
+      const result = await markAllNotificationsRead()
+      if (result.success) {
+        markAllRead()
+      } else {
+        toast.error(result.error || 'Could not mark notifications as read.')
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not mark notifications as read.')
+    }
   }
 
   return (
@@ -139,7 +174,14 @@ export function NotificationPanel() {
                     className="flex w-full cursor-pointer gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50"
                     onClick={() => handleClickNotification(n.id, n.entityUrl, n.read)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleClickNotification(n.id, n.entityUrl, n.read)
+                      // The notification row contains its own delete/confirm
+                      // buttons. Only activate the row itself from the keyboard,
+                      // never when a nested control receives Enter or Space.
+                      if (e.target !== e.currentTarget) return
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        void handleClickNotification(n.id, n.entityUrl, n.read)
+                      }
                     }}
                   >
                     <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted">
@@ -169,6 +211,7 @@ export function NotificationPanel() {
                             size="sm"
                             className="h-6 px-2 text-xs"
                             onClick={(e) => handleConfirmDelete(e, n.id)}
+                            disabled={deletingId === n.id}
                           >
                             {t('panel.delete')}
                           </Button>

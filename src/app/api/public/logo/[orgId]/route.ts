@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
+import { getAppDataDir } from '@/lib/app-data-path'
 import { readFile, stat } from 'fs/promises'
 import path from 'path'
 import { resolvePortalOrg } from '@/lib/portal-slug'

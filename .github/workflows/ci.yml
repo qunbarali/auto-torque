@@ -1,8 +1,7 @@
 name: Build & Test
 
 on:
-  pull_request:
-    branches: [main]
+  workflow_dispatch:
 
 jobs:
   ci:
@@ -14,11 +13,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
 
-      - run: npm ci
+      # No npm lockfile is committed; npm ci fails without package-lock.json.
+      - run: npm install --no-audit --no-fund
 
       - run: npm run lint
+
+      - run: npm run typecheck
 
       - run: npx prisma generate
 

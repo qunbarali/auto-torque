@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises'
+import { readFile, stat } from 'node:fs/promises'
 import { glob } from 'node:fs/promises'
 
 const patterns = [
@@ -31,14 +31,24 @@ for (const root of roots) {
 for (const file of ['package.json', 'prisma.config.ts', 'Dockerfile', 'docker-compose.yml', 'init-db.sh']) files.push(file)
 
 const failures = []
+let scannedFiles = 0
 for (const file of [...new Set(files)]) {
-  if (forbiddenFiles.some((p) => p.test(file)) || file === 'scripts/audit-sqlite.mjs') continue
+  // Node's glob returns platform-native separators. Normalize before exclusions
+  // so Windows does not scan this audit's own forbidden-SQL pattern literals.
+  const normalizedFile = file.replaceAll('\\', '/')
+  if (forbiddenFiles.some((p) => p.test(normalizedFile)) || normalizedFile === 'scripts/audit-sqlite.mjs') continue
   try {
+    const info = await stat(file)
+    if (!info.isFile()) continue
+    scannedFiles += 1
+
     const source = await readFile(file, 'utf8')
     for (const [name, pattern] of patterns) {
       if (pattern.test(source)) failures.push(`${file}: ${name}`)
     }
-  } catch {}
+  } catch (error) {
+    failures.push(`${file}: could not inspect file (${error instanceof Error ? error.message : String(error)})`)
+  }
 }
 
 const pkg = JSON.parse(await readFile('package.json', 'utf8'))
@@ -57,4 +67,4 @@ if (failures.length) {
   console.error([...new Set(failures)].join('\n'))
   process.exit(1)
 }
-console.log(`SQLite-only audit passed (${files.length} files/config entries scanned).`)
+console.log(`SQLite-only audit passed (${scannedFiles} source files scanned).`)

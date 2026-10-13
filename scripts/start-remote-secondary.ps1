@@ -1,0 +1,61 @@
+param(
+  [Parameter(Mandatory = $true)]
+  [string]$AppPath,
+
+  [Parameter(Mandatory = $true)]
+  [string]$HostUrl
+)
+
+$ErrorActionPreference = "Stop"
+
+if (-not (Test-Path -LiteralPath $AppPath -PathType Leaf)) {
+  throw "Auto Torque executable not found: $AppPath"
+}
+
+try {
+  $uri = [System.Uri]::new($HostUrl)
+} catch {
+  throw "HostUrl must be a full URL such as http://192.168.1.20:3000"
+}
+
+if (-not $uri.IsAbsoluteUri -or $uri.Scheme -notin @("http", "https") -or $uri.UserInfo -or $uri.AbsolutePath -ne "/" -or $uri.Query -or $uri.Fragment) {
+  throw "Use an HTTP(S) origin only, without credentials, path, query, or fragment."
+}
+
+$rawAuthority = ($HostUrl.Trim() -replace '^[a-zA-Z][a-zA-Z0-9+.-]*://', '').Split([char[]]@('/', '?', '#'), 2)[0]
+if ($rawAuthority.Contains('@')) {
+  throw "Credentials are not allowed in the host URL."
+}
+
+$hostName = $uri.DnsSafeHost.TrimStart([char[]]@('[')).TrimEnd([char[]]@(']'))
+$isLocalName = $hostName.EndsWith(".local", [System.StringComparison]::OrdinalIgnoreCase)
+$ip = $null
+$isPrivateIp = $false
+
+if ([System.Net.IPAddress]::TryParse($hostName, [ref]$ip)) {
+  if ($ip.AddressFamily -eq [System.Net.Sockets.AddressFamily]::InterNetwork) {
+    $bytes = $ip.GetAddressBytes()
+    $isPrivateIp = (
+      $bytes[0] -eq 10 -or
+      ($bytes[0] -eq 172 -and $bytes[1] -ge 16 -and $bytes[1] -le 31) -or
+      ($bytes[0] -eq 192 -and $bytes[1] -eq 168) -or
+      ($bytes[0] -eq 169 -and $bytes[1] -eq 254)
+    )
+  } elseif ($ip.AddressFamily -eq [System.Net.Sockets.AddressFamily]::InterNetworkV6) {
+    $bytes = $ip.GetAddressBytes()
+    $isPrivateIp = (($bytes[0] -band 0xFE) -eq 0xFC) -or (($bytes[0] -eq 0xFE) -and (($bytes[1] -band 0xC0) -eq 0x80))
+  }
+}
+
+if (-not ($isLocalName -or $isPrivateIp)) {
+  throw "HostUrl must use a private LAN IP address or a .local hostname."
+}
+
+$remoteOrigin = $uri.GetLeftPart([System.UriPartial]::Authority)
+[System.Environment]::SetEnvironmentVariable("AUTO_TORQUE_REMOTE_URL", $null, "Process")
+$env:AUTO_TORQUE_LAN_HOST = "false"
+$env:AUTO_TORQUE_LAN_ORIGINS = ""
+
+Write-Host "Starting Auto Torque in REMOTE-ONLY mode: $remoteOrigin"
+Write-Host "The secondary opens the host server; local SQLite initialization and the local server are skipped by this build."
+Start-Process -FilePath $AppPath -ArgumentList @("--remote-url", $remoteOrigin)
