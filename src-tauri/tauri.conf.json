@@ -38,7 +38,7 @@
       "icons/icon.ico",
       "icons/icon.icns"
     ],
-    "resources": ["runtime/**"],
+    "resources": ["runtime/*", "runtime/**/*"],
     "externalBin": ["binaries/auto-torque-node"],
     "category": "Business",
     "shortDescription": "Smart garage management",
