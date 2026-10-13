@@ -72,7 +72,7 @@ async function POST(request: Request) {
   const limited = rateLimit(request, { ...config, anonymous: true })
   if (limited) return limited
 
-  const isAuthAttempt = authAuditPrefixes.some((p) => pathname.startsWith(p.prefix))
+  const isAuthAttempt = authAuditPrefixes.some((p) => pathname.startsWith(p))
 
   if (isAuthAttempt) {
     // Clone body before better-auth consumes it
