@@ -33,7 +33,10 @@ for (const file of ['package.json', 'prisma.config.ts', 'Dockerfile', 'docker-co
 const failures = []
 let scannedFiles = 0
 for (const file of [...new Set(files)]) {
-  if (forbiddenFiles.some((p) => p.test(file)) || file === 'scripts/audit-sqlite.mjs') continue
+  // Node's glob returns platform-native separators. Normalize before exclusions
+  // so Windows does not scan this audit's own forbidden-SQL pattern literals.
+  const normalizedFile = file.replaceAll('\\\\', '/')
+  if (forbiddenFiles.some((p) => p.test(normalizedFile)) || normalizedFile === 'scripts/audit-sqlite.mjs') continue
   try {
     const info = await stat(file)
     if (!info.isFile()) continue
