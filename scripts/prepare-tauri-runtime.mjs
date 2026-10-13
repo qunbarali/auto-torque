@@ -29,7 +29,7 @@ if (existsSync(messagesDir)) await cp(messagesDir, path.join(runtime, 'messages'
 // into the user's writable app-data directory on first launch.
 const seed = path.join(runtime, 'seed.sqlite')
 await rm(seed, { force: true })
-execFileSync(process.platform === 'win32' ? 'npx.cmd' : 'npx', ['prisma', 'db', 'push', '--skip-generate'], {
+execFileSync(process.platform === 'win32' ? 'npx.cmd' : 'npx', ['prisma', 'db', 'push'], {
   cwd: root,
   stdio: 'inherit',
   // Windows cannot execute .cmd files directly through execFileSync without a shell.
