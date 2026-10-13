@@ -1,6 +1,7 @@
 'use server'
 
 import { db } from '@/lib/db'
+import { getAppDataDir } from '@/lib/app-data-path'
 import { withAuth } from '@/lib/with-auth'
 import { PermissionAction, PermissionSubject } from '@/lib/permissions'
 import { unlink } from 'fs/promises'
